@@ -1,0 +1,118 @@
+/* Vail Training Tools Custom Dark Theme */
+:root {
+  --vail-primary: #008660; /* Vail darker green accent (muted, repeater style) */
+  --vail-primary-hover: #00a575; /* Slightly lighter on hover */
+  --vail-bg-dark: #0a0a0a; /* Vail dark background */
+  --vail-bg-box: #1a1a1a; /* Vail box background */
+  --vail-text: #e8e8e8; /* Vail text color */
+  --vail-border: #2a2a2a; /* Vail border color */
+  --vail-success: #086642; /* Success green (darker, less neon) */
+}
+
+/* Apply Vail color scheme overrides */
+body {
+  background-color: var(--vail-bg-dark);
+  color: var(--vail-text);
+}
+
+.btn-primary,
+.btn-outline-primary:hover,
+.btn-outline-primary:active,
+.btn-check:checked + .btn-outline-primary {
+  background-color: var(--vail-primary);
+  border-color: var(--vail-primary);
+  color: #0a0a0a;
+}
+
+.btn-outline-primary {
+  border-color: var(--vail-primary);
+  color: var(--vail-primary);
+}
+
+.btn-info,
+.alert-info {
+  background-color: var(--vail-primary);
+  border-color: var(--vail-primary);
+  color: #0a0a0a;
+}
+
+a {
+  color: var(--vail-primary);
+}
+
+a:hover {
+  color: var(--vail-primary-hover);
+}
+
+.btn-success {
+  background-color: var(--vail-success);
+  border-color: var(--vail-success);
+}
+
+.btn-success:hover,
+.btn-success:active {
+  background-color: var(--vail-primary);
+  border-color: var(--vail-primary);
+}
+
+.badge.bg-success {
+  background-color: var(--vail-success) !important;
+}
+
+.accordion-item {
+  background-color: var(--vail-bg-box);
+  border-color: var(--vail-border);
+}
+
+.accordion-button {
+  background-color: var(--vail-bg-box);
+  color: var(--vail-text);
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #252525;
+  color: var(--vail-primary);
+}
+
+.form-control {
+  background-color: var(--vail-bg-box);
+  border-color: var(--vail-border);
+  color: var(--vail-text);
+}
+
+.form-control:focus {
+  background-color: var(--vail-bg-box);
+  border-color: var(--vail-primary);
+  color: var(--vail-text);
+  box-shadow: 0 0 0 0.2rem rgba(0, 134, 96, 0.25);
+}
+
+.table {
+  color: var(--vail-text);
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--vail-bg-box);
+}
+
+.modal-content {
+  background-color: var(--vail-bg-box);
+  border-color: var(--vail-border);
+}
+
+.card {
+  background-color: var(--vail-bg-box);
+  border-color: var(--vail-border);
+}
+
+/* Default: do NOT transform text */
+input[type='text'] {
+  text-transform: uppercase;
+}
+
+/* Override the placeholder color or styling as needed */
+input[type='text']::placeholder {
+  color: #aaa; /* Lighter gray or your preferred color */
+  opacity: 1; /* Ensures uniform appearance across different browsers */
+  text-transform: none; /* Reset the text-transform */
+}

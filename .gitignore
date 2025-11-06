@@ -1,0 +1,30 @@
+# Claude configuration
+.claude/
+
+# Netlify deployment folder
+netlify-deploy/
+
+# Deployment documentation
+DEPLOY_INFO.txt
+README for deploy how to.txt
+
+# Node modules
+node_modules/
+
+# Build output
+training/qso-simulator/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*

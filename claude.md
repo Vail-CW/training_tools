@@ -6,10 +6,10 @@
 
 The project now includes three training modules:
 1. **Copy Practice** - Basic Morse code receiving practice
-2. **Send Practice** (Planned) - Morse code sending practice
+2. **Send Practice** - Morse code sending practice with USB CW key support
 3. **QSO Simulator** - Advanced pileup training for contesting and field operations
 
-**Status:** BETA - Copy practice fully functional, QSO Simulator integrated with USB CW key support, Send practice planned
+**Status:** BETA - All modules functional with USB CW key support
 **Contact:** ke9bos@pigletradio.org
 **Community:** https://discord.gg/GBzj8cBat7
 
@@ -69,7 +69,10 @@ Vail Training Tools/
 │   │   ├── webpack.config.*.js  # Webpack build configurations
 │   │   └── jsdoc.json           # JSDoc configuration
 │   ├── scripts/
-│   │   └── training.js          # Core Copy/Send practice logic (618 lines)
+│   │   ├── training.js          # Core Copy/Send practice logic (784 lines)
+│   │   ├── morse-sounder.js     # Sidetone audio generator for send practice
+│   │   ├── morse-decoder.js     # Dit/dah pattern decoder with adaptive timing
+│   │   └── morse-keyer.js       # Keyboard/USB key handler with iambic modes
 │   ├── index.html               # Main landing page with module switcher
 │   └── training.css             # Dark theme styles for main tools (576 lines)
 ├── netlify-deploy/              # Production deployment package
@@ -85,8 +88,10 @@ Vail Training Tools/
 
 ### [training/index.html](training/index.html)
 - Main application page with semantic HTML5 structure
-- Two practice modules: Copy Practice (active) and Send Practice (coming soon)
-- Copy practice modes: All Letters, All Numbers, Letters & Numbers, Custom Selection, Common Words, Callsigns, Q Codes
+- Three practice modules: Copy Practice, Send Practice, and QSO Simulator
+- **Copy Practice modes:** All Letters, All Numbers, Letters & Numbers, Custom Selection, Common Words, Callsigns, Q Codes
+- **Send Practice modes:** Random Letters, Random Numbers, Letters & Numbers, Common Words
+- **Keyer modes:** Straight Key, Iambic A, Iambic B, Ultimatic
 - Settings controls for volume, tone frequency, and reset
 - Statistics panel for tracking performance
 - Bulma CSS components for responsive layout
@@ -94,10 +99,40 @@ Vail Training Tools/
 ### [training/scripts/training.js](training/scripts/training.js)
 - **Audio System:** Web Audio API implementation with precise timing
 - **Morse Code Data:** Complete morse code mappings, word lists, callsign generator, Q codes
-- **Practice Logic:** Random generation, answer checking, statistics tracking
+- **Copy Practice Logic:** Random generation, answer checking, statistics tracking
+- **Send Practice Logic:** Target character generation, morse input integration, auto-advance on correct send
 - **Timing Standard:** PARIS timing (50 dit units per minute at 1 WPM)
   - Dit duration = 1200 / WPM milliseconds
   - Dah duration = 3 × dit
+
+### [training/scripts/morse-sounder.js](training/scripts/morse-sounder.js)
+- **Sidetone Audio Generator** for send practice
+- Web Audio API oscillator with envelope shaping (5ms attack/release)
+- Volume control integration with global settings
+- Prevents audio clicks with proper gain ramping
+- Manages oscillator lifecycle (on/off states)
+
+### [training/scripts/morse-decoder.js](training/scripts/morse-decoder.js)
+- **Dit/Dah Pattern Decoder** converts morse sequences to characters
+- **Adaptive Timing:** Automatically adjusts to user's sending speed
+- Complete morse alphabet mapping (letters, numbers, punctuation)
+- Farnsworth spacing support for letter recognition
+- Character-level decoding with callback notification
+- Returns '*' for unrecognized sequences
+
+### [training/scripts/morse-keyer.js](training/scripts/morse-keyer.js)
+- **Multi-mode Keyer Handler** for keyboard and USB CW key input
+- **4 Keyer Modes:**
+  - Straight Key (mode 1) - Direct key-down/key-up
+  - Iambic A (mode 2) - Basic squeeze keying with queue clearing
+  - Iambic B (mode 3) - Advanced squeeze keying with alternation
+  - Ultimatic (mode 4) - Last-pressed-key priority
+- **Key Mappings (compatible with vband USB adapter):**
+  - Dit: Left Ctrl or `[` key
+  - Dah: Right Ctrl or `]` key
+- Integrates with sounder (audio) and decoder (character recognition)
+- High-frequency oscillator timer for responsive keying
+- PARIS method WPM calculation (60000 / (wpm * 50) = dit duration in ms)
   - Element gap = 1 × dit (between dits/dahs within letter)
   - Letter gap = 3 × dit (between letters)
   - Word gap = 7 × dit (between words)
@@ -133,11 +168,48 @@ Vail Training Tools/
    - Accuracy percentage
    - Current speed display
 
-### Send Practice (Planned)
-- Keyboard-based sending practice
-- Visual feedback for key down/up
-- CW key adapter support (https://www.vailadapter.com)
-- Timing analysis and feedback
+### Send Practice (Implemented)
+A dedicated module for practicing sending Morse code with real-time feedback. Uses the same USB CW key support system as the QSO Simulator, providing a focused environment for developing clean, accurate sending skills.
+
+**Practice Modes:**
+1. **Random Letters** - Single random letters (A-Z)
+2. **Random Numbers** - Single random digits (0-9)
+3. **Letters & Numbers** - Mixed alphanumeric characters
+4. **Common Words** - Practice sending complete words from the ham radio word list
+
+**Keyer Modes:**
+- **Straight Key (mode 1)** - Direct key-down/key-up control
+- **Iambic A (mode 2)** - Basic squeeze keying with queue clearing (default)
+- **Iambic B (mode 3)** - Advanced squeeze keying with dit/dah alternation
+- **Ultimatic (mode 4)** - Last-pressed-key priority mode
+
+**Key Mappings:**
+- **Dit:** Left Ctrl or `[` key
+- **Dah:** Right Ctrl or `]` key
+- Compatible with vband USB CW key adapter (https://www.vailadapter.com)
+
+**How It Works:**
+1. Press "Start Practice" to begin
+2. A target character appears in large text (8rem font size)
+3. Send the character using your USB key or keyboard
+4. System decodes your morse input with adaptive timing
+5. When correct character is sent, automatically advances to next target
+6. Visual feedback via send lamp indicator (glows on character decode)
+
+**Features:**
+- **Adaptive Timing:** Decoder automatically adjusts to your sending speed
+- **Auto-advance:** Generates new target immediately after correct send
+- **Real-time Feedback:** "What You Sent" field shows decoded characters
+- **Sidetone Audio:** Configurable tone frequency (uses global settings)
+- **Visual Indicators:** Send lamp flashes when characters are decoded
+- **Manual Skip:** "Next Character" button to skip difficult targets
+
+**Technical Implementation:**
+- Standalone morse input modules (no ES6 modules, direct script includes)
+- Shared Web Audio API context with copy practice
+- Character-level decoding with callback notification
+- High-frequency oscillator timer for responsive keying
+- 5ms attack/release envelope for click-free sidetone
 
 ### QSO Simulator (Implemented)
 A sophisticated pileup training simulator for practicing contest-style and field activation QSOs. Based on the Morse Walker project by W6NYC, heavily customized with Vail branding and color scheme.
@@ -561,17 +633,42 @@ Edit keyer initialization in [training/qso-simulator/src/js/morse-input/keyer.js
 - Main HTML: [training/index.html](training/index.html)
 - Core Logic: [training/scripts/training.js](training/scripts/training.js)
 - Styles: [training/training.css](training/training.css)
+- Send Practice Modules:
+  - [training/scripts/morse-sounder.js](training/scripts/morse-sounder.js)
+  - [training/scripts/morse-decoder.js](training/scripts/morse-decoder.js)
+  - [training/scripts/morse-keyer.js](training/scripts/morse-keyer.js)
 - QSO Simulator: [training/qso-simulator/](training/qso-simulator/)
-- USB CW Key Modules: [training/qso-simulator/src/js/morse-input/](training/qso-simulator/src/js/morse-input/)
+- QSO Simulator USB Modules: [training/qso-simulator/src/js/morse-input/](training/qso-simulator/src/js/morse-input/)
 - Deployment Package: [netlify-deploy/](netlify-deploy/)
 
 ---
 
 ## Recent Updates
 
-### November 2, 2025 - USB CW Key Support
-- Integrated USB CW key support from morsewalker usb-support branch
-- Added 4 morse-input modules: keyer.js, decoder.js, sounder.js, morse-input.js
+### November 6, 2025 - Send Practice Module Implementation
+- **Implemented complete Send Practice module** with USB CW key support
+- Created 3 standalone morse input modules for training tools:
+  - `morse-sounder.js` - Sidetone audio generator with Web Audio API
+  - `morse-decoder.js` - Dit/dah pattern decoder with adaptive timing
+  - `morse-keyer.js` - Multi-mode keyer handler (4 modes: Straight, Iambic A/B, Ultimatic)
+- **UI Features:**
+  - Large target character display (8rem font size)
+  - Real-time "What You Sent" output field
+  - Send lamp visual indicator (glows on character decode)
+  - Practice mode selection (Letters, Numbers, Mixed, Words)
+  - Keyer mode selection dropdown
+- **Functionality:**
+  - Auto-advance to next character on correct send
+  - Adaptive timing that adjusts to user's sending speed
+  - Manual skip with "Next Character" button
+  - Integration with global tone/volume settings
+  - Keyboard shortcuts: Left/Right Ctrl or `[`/`]` keys
+- Updated [claude.md](claude.md) documentation with complete Send Practice details
+- Added CSS styling for send-lamp active state with glow effect
+
+### November 2, 2025 - QSO Simulator USB CW Key Support
+- Integrated USB CW key support into QSO Simulator from morsewalker usb-support branch
+- Added 4 morse-input modules to QSO Simulator: keyer.js, decoder.js, sounder.js, morse-input.js
 - Implemented 4 keyer modes: Straight Key, Iambic A, Iambic B, Ultimatic
 - Real-time morse decoding with adaptive speed adjustment
 - Configurable sidetone audio synchronized with user settings
@@ -581,5 +678,5 @@ Edit keyer initialization in [training/qso-simulator/src/js/morse-input/keyer.js
 
 ---
 
-*Last Updated: 2025-11-02*
-*Project Status: BETA - Copy Practice Functional, QSO Simulator with USB CW Key Support, Send Practice Planned*
+*Last Updated: 2025-11-06*
+*Project Status: BETA - All Modules Functional with USB CW Key Support*

@@ -267,20 +267,112 @@
 						<!-- Send Practice Module -->
 						<div id="send-practice-module" class="practice-module" style="display: none;">
 						<div class="box practice-box mb-5">
-							<div class="has-text-centered" style="padding: 3rem 2rem;">
-								<div class="mb-4">
-									<span class="icon" style="font-size: 4rem; color: #00d1b2;">
-										<i class="mdi mdi-keyboard"></i>
-									</span>
+							<div class="level mb-4">
+								<div class="level-left">
+									<div class="level-item">
+										<h1 class="title is-4">
+											<span class="icon-text">
+												<span class="icon"><i class="mdi mdi-keyboard"></i></span>
+												<span>Send Practice</span>
+											</span>
+										</h1>
+									</div>
 								</div>
-								<h1 class="title is-3 mb-3">Send Practice</h1>
-								<h2 class="subtitle is-5 has-text-grey-light mb-4">Coming Soon!</h2>
-								<p class="has-text-grey-light mb-4" style="max-width: 500px; margin: 0 auto;">
-									The Send Practice module is currently under development. This feature will allow you to practice sending Morse code with your keyboard or a connected CW key adapter.
-								</p>
-								<p class="has-text-grey-light">
-									In the meantime, try out <strong style="color: #00d1b2;">Copy Practice</strong> to improve your receiving skills!
-								</p>
+								<div class="level-right">
+									<div class="level-item">
+										<span class="tag send-lamp is-medium">
+											<i class="mdi mdi-radio-tower"></i>
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Practice Controls -->
+							<div class="block">
+								<div class="columns is-variable is-4">
+									<div class="column">
+										<div class="field">
+											<label class="label is-small">Send Mode</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="send-mode">
+														<option value="letters">Random Letters</option>
+														<option value="numbers">Random Numbers</option>
+														<option value="mixed">Letters & Numbers</option>
+														<option value="words">Common Words</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column">
+										<div class="field">
+											<label class="label is-small">Keyer Mode</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="keyer-mode">
+														<option value="1">Straight Key</option>
+														<option value="2" selected>Iambic A</option>
+														<option value="3">Iambic B</option>
+														<option value="4">Ultimatic</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Target Character Display -->
+							<div class="block">
+								<div class="practice-display">
+									<div class="morse-display" style="min-height: 150px; display: flex; align-items: center; justify-content: center;">
+										<div id="target-character" class="target-character" style="font-size: 8rem; font-weight: bold; color: #00d1b2; font-family: monospace;">
+											<span class="has-text-grey-light" style="font-size: 1.5rem;">Press Start to begin...</span>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Decoded Output -->
+							<div class="block">
+								<div class="field">
+									<label class="label is-small">What You Sent</label>
+									<div class="control">
+										<input class="input is-medium" type="text" id="sent-output" placeholder="Send characters with your key..." readonly style="background-color: rgba(255, 255, 255, 0.05); font-family: monospace; font-size: 1.5rem; text-align: center; letter-spacing: 0.3rem;">
+									</div>
+								</div>
+							</div>
+
+							<!-- Control Buttons -->
+							<div class="block">
+								<div class="buttons is-centered">
+									<button class="button is-primary is-medium" id="start-send-btn">
+										<span class="icon"><i class="mdi mdi-play"></i></span>
+										<span>Start Practice</span>
+									</button>
+									<button class="button is-info is-medium" id="next-char-btn" disabled>
+										<span class="icon"><i class="mdi mdi-skip-next"></i></span>
+										<span>Next Character</span>
+									</button>
+									<button class="button is-danger is-medium" id="stop-send-btn" disabled>
+										<span class="icon"><i class="mdi mdi-stop"></i></span>
+										<span>Stop</span>
+									</button>
+								</div>
+							</div>
+
+							<!-- Send Practice Info -->
+							<div class="block">
+								<div class="notification is-info is-light">
+									<p class="is-size-7">
+										<strong>How to use:</strong> Use your USB CW key adapter (like the vband adapter) or keyboard keys:
+										<br>
+										<strong>Dit:</strong> Left Ctrl or [ key
+										<br>
+										<strong>Dah:</strong> Right Ctrl or ] key
+									</p>
+								</div>
 							</div>
 						</div>
 						</div>
@@ -401,6 +493,10 @@
 				});
 			});
 		</script>
+		<!-- Morse input modules for send practice -->
+		<script src="scripts/morse-sounder.js"></script>
+		<script src="scripts/morse-decoder.js"></script>
+		<script src="scripts/morse-keyer.js"></script>
 		<script src="scripts/training.js"></script>
 	</body>
 </html>

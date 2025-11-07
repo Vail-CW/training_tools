@@ -591,27 +591,194 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 
+	// ========================================
 	// Send Practice Module
-	const sendWpmSlider = document.getElementById('send-wpm');
-	const clearSendBtn = document.getElementById('clear-send-btn');
-	const decodedOutput = document.getElementById('decoded-output');
-	const sendMorseVisual = document.getElementById('send-morse-visual');
+	// ========================================
 
-	// Update send WPM display
-	if (sendWpmSlider) {
-		const sendWpmOutput = document.querySelector('output[for="send-wpm"]');
-		sendWpmSlider.addEventListener('input', (e) => {
-			sendWpmOutput.textContent = e.target.value;
-		});
+	let sendPracticing = false;
+	let targetChar = '';
+	let sentChars = '';
+	let morseKeyer = null;
+	let morseDecoder = null;
+	let morseSounder = null;
+
+	const startSendBtn = document.getElementById('start-send-btn');
+	const stopSendBtn = document.getElementById('stop-send-btn');
+	const nextCharBtn = document.getElementById('next-char-btn');
+	const targetCharDisplay = document.getElementById('target-character');
+	const sentOutput = document.getElementById('sent-output');
+	const sendModeSelect = document.getElementById('send-mode');
+	const keyerModeSelect = document.getElementById('keyer-mode');
+
+	// Initialize morse input system
+	function initMorseInput() {
+		if (!morseDecoder) {
+			// Initialize decoder with callback
+			morseDecoder = new MorseDecoder((letter) => {
+				handleDecodedCharacter(letter);
+			});
+
+			// Initialize sounder
+			morseSounder = new MorseSounder();
+
+			// Initialize keyer
+			morseKeyer = new MorseKeyer(morseSounder, morseDecoder);
+
+			// Set initial settings
+			const toneSlider = document.getElementById('tone-freq');
+			const tone = toneSlider ? parseFloat(toneSlider.value) : 600;
+			morseKeyer.setTone(tone);
+			morseKeyer.setWpm(20);
+
+			// Set keyer mode
+			const mode = keyerModeSelect ? keyerModeSelect.value : '2';
+			morseKeyer.setMode(mode);
+
+			console.log('Morse input system initialized');
+		}
 	}
 
-	// Clear send practice
-	if (clearSendBtn) {
-		clearSendBtn.addEventListener('click', () => {
-			if (decodedOutput) decodedOutput.value = '';
-			if (sendMorseVisual) {
-				sendMorseVisual.innerHTML = '<span class="has-text-grey-light">Press a key to start sending...</span>';
+	// Handle decoded characters from morse input
+	function handleDecodedCharacter(char) {
+		if (!sendPracticing) return;
+
+		console.log('Decoded character:', char);
+		sentChars += char;
+		if (sentOutput) {
+			sentOutput.value = sentChars;
+		}
+
+		// Flash the send lamp
+		const sendLamp = document.querySelector('.send-lamp');
+		if (sendLamp) {
+			sendLamp.classList.add('active');
+			setTimeout(() => {
+				sendLamp.classList.remove('active');
+			}, 200);
+		}
+
+		// Check if character matches target
+		if (char.toUpperCase() === targetChar.toUpperCase()) {
+			// Correct! Generate new target after a brief delay
+			setTimeout(() => {
+				generateNewTarget();
+			}, 500);
+		}
+	}
+
+	// Generate new target character
+	function generateNewTarget() {
+		if (!sendPracticing) return;
+
+		const mode = sendModeSelect ? sendModeSelect.value : 'letters';
+		let characters = '';
+
+		switch (mode) {
+			case 'letters':
+				characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+				break;
+			case 'numbers':
+				characters = '0123456789';
+				break;
+			case 'mixed':
+				characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+				break;
+			case 'words':
+				// For words mode, pick a random word
+				targetChar = commonWords[Math.floor(Math.random() * commonWords.length)];
+				if (targetCharDisplay) {
+					targetCharDisplay.innerHTML = targetChar;
+				}
+				return;
+		}
+
+		// Pick random character
+		targetChar = characters.charAt(Math.floor(Math.random() * characters.length));
+		if (targetCharDisplay) {
+			targetCharDisplay.innerHTML = targetChar;
+		}
+	}
+
+	// Start send practice
+	function startSendPractice() {
+		console.log('Starting send practice...');
+		sendPracticing = true;
+		sentChars = '';
+
+		// Initialize morse input if needed
+		initMorseInput();
+
+		// Update UI
+		if (startSendBtn) startSendBtn.disabled = true;
+		if (stopSendBtn) stopSendBtn.disabled = false;
+		if (nextCharBtn) nextCharBtn.disabled = false;
+		if (sentOutput) sentOutput.value = '';
+
+		// Generate first target
+		generateNewTarget();
+	}
+
+	// Stop send practice
+	function stopSendPractice() {
+		console.log('Stopping send practice...');
+		sendPracticing = false;
+
+		// Update UI
+		if (startSendBtn) startSendBtn.disabled = false;
+		if (stopSendBtn) stopSendBtn.disabled = true;
+		if (nextCharBtn) nextCharBtn.disabled = true;
+		if (targetCharDisplay) {
+			targetCharDisplay.innerHTML = '<span class="has-text-grey-light" style="font-size: 1.5rem;">Press Start to begin...</span>';
+		}
+	}
+
+	// Event listeners for send practice
+	if (startSendBtn) {
+		startSendBtn.addEventListener('click', startSendPractice);
+	}
+
+	if (stopSendBtn) {
+		stopSendBtn.addEventListener('click', stopSendPractice);
+	}
+
+	if (nextCharBtn) {
+		nextCharBtn.addEventListener('click', () => {
+			if (sendPracticing) {
+				generateNewTarget();
 			}
 		});
 	}
+
+	// Update keyer mode when changed
+	if (keyerModeSelect) {
+		keyerModeSelect.addEventListener('change', (e) => {
+			if (morseKeyer) {
+				morseKeyer.setMode(e.target.value);
+				console.log('Keyer mode changed to:', e.target.value);
+			}
+		});
+	}
+
+	// Global keyboard event handlers for morse input
+	window.addEventListener('keydown', (e) => {
+		if (!sendPracticing || !morseKeyer) return;
+
+		// Prevent default for our control keys
+		if (['ControlLeft', 'ControlRight', 'BracketLeft', 'BracketRight'].includes(e.code)) {
+			e.preventDefault();
+		}
+
+		morseKeyer.press(e, true);
+	});
+
+	window.addEventListener('keyup', (e) => {
+		if (!sendPracticing || !morseKeyer) return;
+
+		// Prevent default for our control keys
+		if (['ControlLeft', 'ControlRight', 'BracketLeft', 'BracketRight'].includes(e.code)) {
+			e.preventDefault();
+		}
+
+		morseKeyer.press(e, false);
+	});
 });

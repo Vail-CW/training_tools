@@ -117,6 +117,7 @@
 						<button class="button is-medium module-switch-btn" data-module="send-practice">
 							<span class="icon"><i class="mdi mdi-keyboard"></i></span>
 							<span>Send Practice</span>
+							<span class="tag is-info is-light ml-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">BETA</span>
 						</button>
 						<button class="button is-medium module-switch-btn" data-module="qso-simulator" onclick="window.location.href='qso-simulator/index.html'">
 							<span class="icon"><i class="mdi mdi-radio-tower"></i></span>
@@ -167,6 +168,28 @@
 														<option value="words">Common Words</option>
 														<option value="callsigns">Callsigns</option>
 														<option value="qcodes">Q Codes</option>
+														<option value="cwacademy">CW Academy</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column" id="cwa-session-container" style="display: none;">
+										<div class="field">
+											<label class="label is-small">CWA Beginner Session</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="cwa-session">
+														<option value="1">Session 1</option>
+														<option value="2">Session 2</option>
+														<option value="3">Session 3</option>
+														<option value="4">Session 4</option>
+														<option value="5">Session 5</option>
+														<option value="6">Session 6</option>
+														<option value="7">Session 7</option>
+														<option value="8">Session 8</option>
+														<option value="9">Session 9</option>
+														<option value="10">Session 10</option>
 													</select>
 												</div>
 											</div>
@@ -186,6 +209,23 @@
 													max="40"
 													step="1"
 													value="12">
+											</div>
+										</div>
+									</div>
+									<div class="column" id="char-count-container">
+										<div class="field">
+											<label class="label is-small">
+												<span>Characters</span>:
+												<output for="char-count"></output>
+											</label>
+											<div class="control">
+												<input
+													id="char-count"
+													type="range"
+													min="1"
+													max="10"
+													step="1"
+													value="1">
 											</div>
 										</div>
 									</div>
@@ -224,7 +264,7 @@
 								<div class="field">
 									<label class="label is-small">Your Answer</label>
 									<div class="control">
-										<input class="input is-medium" type="text" id="answer-input" placeholder="Type what you heard..." disabled>
+										<input class="input is-medium" type="text" id="answer-input" placeholder="Type what you heard..." disabled style="text-transform: uppercase;">
 									</div>
 								</div>
 							</div>
@@ -243,6 +283,14 @@
 									<button class="button is-success is-medium" id="check-btn" disabled>
 										<span class="icon"><i class="mdi mdi-check"></i></span>
 										<span>Check Answer</span>
+									</button>
+									<button class="button is-warning is-medium" id="show-answer-btn" disabled style="display: none;">
+										<span class="icon"><i class="mdi mdi-eye"></i></span>
+										<span>Show Answer</span>
+									</button>
+									<button class="button is-info is-medium" id="continue-btn" disabled style="display: none;">
+										<span class="icon"><i class="mdi mdi-arrow-right"></i></span>
+										<span>Continue</span>
 									</button>
 									<button class="button is-danger is-medium" id="stop-btn" disabled>
 										<span class="icon"><i class="mdi mdi-stop"></i></span>
@@ -364,7 +412,7 @@
 
 							<!-- Send Practice Info -->
 							<div class="block">
-								<div class="notification is-info is-light">
+								<div class="notification" style="background-color: rgba(0, 134, 102, 0.12); border-left: 4px solid #086; color: #e8e8e8;">
 									<p class="is-size-7">
 										<strong>How to use:</strong> Use your USB CW key adapter (like the vband adapter) or keyboard keys:
 										<br>

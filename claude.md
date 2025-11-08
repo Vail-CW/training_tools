@@ -156,17 +156,59 @@ Vail Training Tools/
    - Common Words (100+ words including ham radio terms)
    - Callsigns (realistic US amateur radio callsigns)
    - Q Codes (20 common amateur radio Q codes)
+   - CW Academy (10 beginner sessions with progressive character introduction and prosigns)
 
 2. **Settings:**
-   - Speed: 5-40 WPM
+   - Speed: 5-40 WPM (default 12 WPM)
    - Volume: 0-100%
    - Tone Frequency: 400-1000 Hz (default 600 Hz)
+   - Character Count: 1-10 characters per sequence (default 1)
+     - Available for: Letters, Numbers, Mixed, Custom, CW Academy modes
+     - Hidden for: Words, Callsigns, Q Codes modes
 
-3. **Session Statistics:**
+3. **CW Academy Integration:**
+   - 10 progressive sessions following CW Academy Beginner curriculum
+   - Session 1: A, E, N, T
+   - Session 2: + S, I, O and numbers 1, 4
+   - Session 3: + H, D, L, R and numbers 2, 5
+   - Session 4: + C, U
+   - Session 5: + M, W and numbers 3, 6
+   - Session 6: + F, Y
+   - Session 7: + G, P, Q and numbers 7, 9
+   - Session 8: + B, V and prosign AR
+   - Session 9: + J, K and prosigns BT + number 0
+   - Session 10: + X, Z and prosigns BK, SK + number 8
+   - Prosigns have 20% chance of appearing (when available)
+   - Character count setting applies to regular characters
+   - Prosigns always appear as single units
+
+4. **User Experience Features:**
+   - **Auto-capitalization:** All input automatically converts to uppercase
+   - **Smart wrong answer handling:**
+     - Shows "Try again..." message for 1 second
+     - Automatically replays morse code after 1 second
+     - "Show Answer" button appears to reveal answer if needed
+     - Typing a new guess re-enables "Check Answer" button
+   - **Manual answer reveal:**
+     - Click "Show Answer" to see correct answer
+     - "Continue" button appears (must click to proceed to next)
+     - Gives full control over pacing
+   - **Correct answer flow:**
+     - Shows "Correct!" message with answer
+     - Automatically advances to next question after 2 seconds
+
+5. **Session Statistics:**
    - Total attempts
    - Correct answers
    - Accuracy percentage
    - Current speed display
+
+6. **Prosign Support:**
+   - AR (end of message): ·-·-·
+   - BT (break/pause): -···-
+   - BK (break-in): -···-·-
+   - SK (end of contact): ···-·-
+   - Properly handled as single units in morse playback
 
 ### Send Practice (Implemented)
 A dedicated module for practicing sending Morse code with real-time feedback. Uses the same USB CW key support system as the QSO Simulator, providing a focused environment for developing clean, accurate sending skills.
@@ -645,6 +687,27 @@ Edit keyer initialization in [training/qso-simulator/src/js/morse-input/keyer.js
 
 ## Recent Updates
 
+### November 8, 2025 - Copy Practice Enhancements
+- **Added CW Academy mode** with 10 progressive beginner sessions
+  - Complete character curriculum from Session 1 (AENT) to Session 10 (full alphabet + numbers)
+  - Prosign support (AR, BT, BK, SK) introduced in Sessions 8-10
+  - 20% chance of prosign practice when available in session
+  - Character count slider applies to regular characters; prosigns always single units
+- **Improved wrong answer workflow:**
+  - "Try again..." visual feedback for 1 second
+  - Automatic morse code replay after 1 second delay
+  - "Show Answer" button for manual answer reveal
+  - Re-enables "Check Answer" button when typing new guess
+  - "Continue" button requires manual click to proceed after showing answer
+- **Added Character Count control:**
+  - Slider from 1-10 characters (default: 1)
+  - Shows for: Letters, Numbers, Mixed, Custom, CW Academy modes
+  - Hides for: Words, Callsigns, Q Codes modes
+- **Auto-capitalization:** Input field automatically converts to uppercase
+- **Dark theme consistency:** Fixed Send Practice info box to match dark theme
+- **BETA tag:** Added to Send Practice module button
+- **UI label update:** Changed "CW Academy Session" to "CWA Beginner Session"
+
 ### November 6, 2025 - Send Practice Module Implementation
 - **Implemented complete Send Practice module** with USB CW key support
 - Created 3 standalone morse input modules for training tools:
@@ -678,5 +741,5 @@ Edit keyer initialization in [training/qso-simulator/src/js/morse-input/keyer.js
 
 ---
 
-*Last Updated: 2025-11-06*
+*Last Updated: 2025-11-08*
 *Project Status: BETA - All Modules Functional with USB CW Key Support*

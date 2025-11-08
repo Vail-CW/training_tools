@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	const startBtn = document.getElementById('start-btn');
 	const repeatBtn = document.getElementById('repeat-btn');
 	const checkBtn = document.getElementById('check-btn');
+	const showAnswerBtn = document.getElementById('show-answer-btn');
+	const continueBtn = document.getElementById('continue-btn');
 	const stopBtn = document.getElementById('stop-btn');
 	const answerInput = document.getElementById('answer-input');
 	const morseVisual = document.getElementById('morse-visual');
@@ -48,7 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
 		'Y': '-.--', 'Z': '--..',
 		'0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
-		'5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.'
+		'5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+		// Prosigns
+		'AR': '.-.-.', 'BT': '-...-', 'BK': '-...-.-', 'SK': '...-.-'
 	};
 
 	// Common words for practice (mix of ham radio terms and common English words)
@@ -70,6 +74,21 @@ document.addEventListener('DOMContentLoaded', () => {
 		'HER', 'SHE', 'HIM', 'HOW', 'MAN', 'BOY', 'DID', 'ITS', 'LET', 'PUT',
 		'SAY', 'SEE', 'TRY', 'WHY', 'MY', 'SO', 'DO', 'GO', 'HI', 'AM'
 	];
+
+	// CW Academy Beginner Course Sessions (cumulative character sets)
+	// Each session includes all characters and prosigns from current and previous sessions
+	const cwAcademySessions = {
+		1: { chars: 'AENT', prosigns: [], numbers: '' },
+		2: { chars: 'AENTSIO', prosigns: [], numbers: '14' },
+		3: { chars: 'AENTSIOHDLR', prosigns: [], numbers: '1425' },
+		4: { chars: 'AENTSIOHDLRCU', prosigns: [], numbers: '1425' },
+		5: { chars: 'AENTSIOHDLRCUMW', prosigns: [], numbers: '142536' },
+		6: { chars: 'AENTSIOHDLRCUMWFY', prosigns: [], numbers: '142536' },
+		7: { chars: 'AENTSIOHDLRCUMWFYGPQ', prosigns: [], numbers: '14253679' },
+		8: { chars: 'AENTSIOHDLRCUMWFYGPQBV', prosigns: ['AR'], numbers: '14253679' },
+		9: { chars: 'AENTSIOHDLRCUMWFYGPQBVJK', prosigns: ['AR', 'BT'], numbers: '0145236789' },
+		10: { chars: 'AENTSIOHDLRCUMWFYGPQBVJKXZ', prosigns: ['AR', 'BT', 'BK', 'SK'], numbers: '0123456789' }
+	};
 
 	// Web Audio API setup
 	let audioContext = null;
@@ -164,6 +183,16 @@ document.addEventListener('DOMContentLoaded', () => {
 		toneOutput.textContent = toneSlider.value;
 	}
 
+	// Update character count display
+	const charCountSlider = document.getElementById('char-count');
+	if (charCountSlider) {
+		const charCountOutput = document.querySelector('output[for="char-count"]');
+		charCountSlider.addEventListener('input', (e) => {
+			charCountOutput.textContent = e.target.value;
+		});
+		charCountOutput.textContent = charCountSlider.value;
+	}
+
 	// Custom character selection
 	const practiceMode = document.getElementById('practice-mode');
 	const customSelection = document.getElementById('custom-selection');
@@ -209,13 +238,33 @@ document.addEventListener('DOMContentLoaded', () => {
 		console.log('Custom characters:', Array.from(customCharacters).join(''));
 	}
 
-	// Show/hide custom selection based on mode
+	// Show/hide custom selection and character count based on mode
+	const charCountContainer = document.getElementById('char-count-container');
+	const cwaSessionContainer = document.getElementById('cwa-session-container');
 	if (practiceMode) {
 		practiceMode.addEventListener('change', (e) => {
-			if (e.target.value === 'custom') {
+			const mode = e.target.value;
+
+			// Show custom selection for custom mode
+			if (mode === 'custom') {
 				customSelection.style.display = 'block';
 			} else {
 				customSelection.style.display = 'none';
+			}
+
+			// Show CW Academy session selector for cwacademy mode
+			if (mode === 'cwacademy') {
+				cwaSessionContainer.style.display = 'block';
+			} else {
+				cwaSessionContainer.style.display = 'none';
+			}
+
+			// Show character count for letters, numbers, mixed, custom, and cwacademy
+			// Hide for words, callsigns, and qcodes
+			if (['letters', 'numbers', 'mixed', 'custom', 'cwacademy'].includes(mode)) {
+				charCountContainer.style.display = 'block';
+			} else {
+				charCountContainer.style.display = 'none';
 			}
 		});
 	}
@@ -249,10 +298,41 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
+	// Show answer button
+	if (showAnswerBtn) {
+		showAnswerBtn.addEventListener('click', () => {
+			showAnswerAndContinue();
+		});
+	}
+
+	// Continue button
+	if (continueBtn) {
+		continueBtn.addEventListener('click', () => {
+			continueToNext();
+		});
+	}
+
 	// Stop button
 	if (stopBtn) {
 		stopBtn.addEventListener('click', () => {
 			stopPractice();
+		});
+	}
+
+	// Auto-capitalize answer input
+	if (answerInput) {
+		answerInput.addEventListener('input', (e) => {
+			const start = e.target.selectionStart;
+			const end = e.target.selectionEnd;
+			e.target.value = e.target.value.toUpperCase();
+			e.target.setSelectionRange(start, end);
+
+			// Re-enable check button if user starts typing after getting it wrong
+			if (isPracticing && checkBtn.disabled && e.target.value.length > 0) {
+				checkBtn.disabled = false;
+				showAnswerBtn.disabled = true;
+				showAnswerBtn.style.display = 'none';
+			}
 		});
 	}
 
@@ -272,6 +352,10 @@ document.addEventListener('DOMContentLoaded', () => {
 		stopBtn.disabled = false;
 		repeatBtn.disabled = false;
 		checkBtn.disabled = false;
+		showAnswerBtn.disabled = true;
+		showAnswerBtn.style.display = 'none';
+		continueBtn.disabled = true;
+		continueBtn.style.display = 'none';
 		answerInput.disabled = false;
 		answerInput.value = '';
 		answerInput.focus();
@@ -336,12 +420,59 @@ document.addEventListener('DOMContentLoaded', () => {
 				displayMorse(currentAnswer);
 				playCurrentMorse();
 				return;
+			case 'cwacademy':
+				// Generate characters from CW Academy session
+				const sessionNum = parseInt(document.getElementById('cwa-session').value);
+				const session = cwAcademySessions[sessionNum];
+				const charCountSliderElement = document.getElementById('char-count');
+				const charCount = charCountSliderElement ? parseInt(charCountSliderElement.value) : 1;
+
+				// Combine all available characters (letters and numbers)
+				const allChars = session.chars + session.numbers;
+
+				// Check if we have both characters and prosigns available
+				const hasProsigns = session.prosigns && session.prosigns.length > 0;
+				const hasChars = allChars.length > 0;
+
+				if (!hasChars && !hasProsigns) {
+					alert('No characters or prosigns available for this session!');
+					stopPractice();
+					return;
+				}
+
+				// Decide whether to pick a prosign or regular characters
+				// If prosigns are available, 20% chance of picking a prosign
+				const pickProsign = hasProsigns && Math.random() < 0.2;
+
+				if (pickProsign) {
+					// Pick exactly ONE prosign
+					currentAnswer = session.prosigns[Math.floor(Math.random() * session.prosigns.length)];
+					console.log('Generated CW Academy prosign:', currentAnswer, 'from session', sessionNum);
+				} else {
+					// Pick N random characters based on character count slider
+					if (!hasChars) {
+						// Fallback to prosign if no chars available
+						currentAnswer = session.prosigns[Math.floor(Math.random() * session.prosigns.length)];
+						console.log('Generated CW Academy prosign (fallback):', currentAnswer, 'from session', sessionNum);
+					} else {
+						currentAnswer = '';
+						for (let i = 0; i < charCount; i++) {
+							currentAnswer += allChars.charAt(Math.floor(Math.random() * allChars.length));
+						}
+						console.log('Generated CW Academy characters:', currentAnswer, 'from session', sessionNum);
+					}
+				}
+
+				displayMorse(currentAnswer);
+				playCurrentMorse();
+				return;
 			default:
 				characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 		}
 
-		// Generate random string (3-5 characters)
-		const length = Math.floor(Math.random() * 3) + 3;
+		// Generate random string using character count from slider
+		const charCountSlider = document.getElementById('char-count');
+		const length = charCountSlider ? parseInt(charCountSlider.value) : 1;
 		currentAnswer = '';
 		for (let i = 0; i < length; i++) {
 			currentAnswer += characters.charAt(Math.floor(Math.random() * characters.length));
@@ -440,6 +571,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	function textToMorse(text) {
+		// Check if the entire text is a prosign
+		if (morseCode[text]) {
+			return morseCode[text];
+		}
+		// Otherwise, split into individual characters
 		return text.split('').map(char => morseCode[char] || '').join(' ');
 	}
 
@@ -522,32 +658,94 @@ document.addEventListener('DOMContentLoaded', () => {
 				notification.classList.remove('is-danger');
 				notification.classList.add('is-success');
 			}
+
+			stats.accuracy = Math.round((stats.correct / stats.attempts) * 100);
+
+			// Update stats display
+			document.getElementById('stat-attempts').textContent = stats.attempts;
+			document.getElementById('stat-correct').textContent = stats.correct;
+			document.getElementById('stat-accuracy').textContent = stats.accuracy + '%';
+
+			resultArea.style.display = 'block';
+
+			// Generate new problem after a delay
+			setTimeout(() => {
+				if (isPracticing) {
+					answerInput.value = '';
+					resultArea.style.display = 'none';
+					generateNewProblem();
+				}
+			}, 2000);
 		} else {
-			resultText.textContent = 'Incorrect';
-			correctAnswer.textContent = `Correct answer: ${currentAnswer}`;
+			// Wrong answer - show visual feedback, then replay after 1 second
+			stats.accuracy = Math.round((stats.correct / stats.attempts) * 100);
+
+			// Update stats display
+			document.getElementById('stat-attempts').textContent = stats.attempts;
+			document.getElementById('stat-correct').textContent = stats.correct;
+			document.getElementById('stat-accuracy').textContent = stats.accuracy + '%';
+
+			// Show brief "Try again" message
+			resultText.textContent = 'Try again...';
+			correctAnswer.textContent = '';
 			if (notification) {
-				notification.classList.remove('is-success');
-				notification.classList.add('is-danger');
+				notification.classList.remove('is-success', 'is-info');
+				notification.classList.add('is-warning');
 			}
+			resultArea.style.display = 'block';
+
+			// Disable check button and show the show answer button
+			checkBtn.disabled = true;
+			showAnswerBtn.disabled = false;
+			showAnswerBtn.style.display = 'inline-flex';
+
+			// Clear the input
+			answerInput.value = '';
+
+			// Hide the "Try again" message and replay after 1 second
+			setTimeout(() => {
+				if (isPracticing) {
+					resultArea.style.display = 'none';
+					playCurrentMorse();
+				}
+			}, 1000);
 		}
+	}
 
-		stats.accuracy = Math.round((stats.correct / stats.attempts) * 100);
-
-		// Update stats display
-		document.getElementById('stat-attempts').textContent = stats.attempts;
-		document.getElementById('stat-correct').textContent = stats.correct;
-		document.getElementById('stat-accuracy').textContent = stats.accuracy + '%';
-
+	function showAnswerAndContinue() {
+		// Show the correct answer
+		const notification = resultArea.querySelector('.notification');
+		resultText.textContent = 'The answer was:';
+		correctAnswer.textContent = currentAnswer;
+		if (notification) {
+			notification.classList.remove('is-success', 'is-warning');
+			notification.classList.add('is-info');
+		}
 		resultArea.style.display = 'block';
 
-		// Generate new problem after a delay
-		setTimeout(() => {
-			if (isPracticing) {
-				answerInput.value = '';
-				resultArea.style.display = 'none';
-				generateNewProblem();
-			}
-		}, 2000);
+		// Hide show answer button, show continue button
+		showAnswerBtn.disabled = true;
+		showAnswerBtn.style.display = 'none';
+		continueBtn.disabled = false;
+		continueBtn.style.display = 'inline-flex';
+	}
+
+	function continueToNext() {
+		// Hide continue button and result area
+		continueBtn.disabled = true;
+		continueBtn.style.display = 'none';
+		resultArea.style.display = 'none';
+
+		// Re-enable check button
+		checkBtn.disabled = false;
+
+		// Clear input and generate new problem
+		answerInput.value = '';
+		answerInput.focus();
+
+		if (isPracticing) {
+			generateNewProblem();
+		}
 	}
 
 	// Key buttons for sending practice

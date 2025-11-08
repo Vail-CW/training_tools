@@ -121,15 +121,12 @@ Vail Training Tools/
 - Returns '*' for unrecognized sequences
 
 ### [training/scripts/morse-keyer.js](training/scripts/morse-keyer.js)
-- **Multi-mode Keyer Handler** for keyboard and USB CW key input
+- **Multi-mode Keyer Handler** processes key events and generates dit/dah patterns
 - **4 Keyer Modes:**
   - Straight Key (mode 1) - Direct key-down/key-up
   - Iambic A (mode 2) - Basic squeeze keying with queue clearing
   - Iambic B (mode 3) - Advanced squeeze keying with alternation
   - Ultimatic (mode 4) - Last-pressed-key priority
-- **Key Mappings (compatible with vband USB adapter):**
-  - Dit: Left Ctrl or `[` key
-  - Dah: Right Ctrl or `]` key
 - Integrates with sounder (audio) and decoder (character recognition)
 - High-frequency oscillator timer for responsive keying
 - PARIS method WPM calculation (60000 / (wpm * 50) = dit duration in ms)
@@ -137,6 +134,25 @@ Vail Training Tools/
   - Letter gap = 3 × dit (between letters)
   - Word gap = 7 × dit (between words)
 - **Audio Engineering:** 5ms attack/release envelope to prevent clicks
+
+### [training/scripts/morse-input-handler.js](training/scripts/morse-input-handler.js)
+- **Unified Input Manager** for both MIDI and keyboard CW keys
+- **MIDI Support:**
+  - Web MIDI API integration for direct device connection
+  - Auto-detects and connects to MIDI CW keys
+  - Supports Vail Adapter protocol (MIDI notes 0, 1, 2 for straight/dit/dah)
+  - Supports N6ARA TinyMIDI protocol (MIDI notes 20, 21 for dit/dah)
+  - Hot-plug support with automatic reconnection
+  - Sends configuration to adapter (dit duration via CC 0x01, keyer mode via Program Change)
+  - Releases all keys on device disconnect
+- **Keyboard Support:**
+  - Key Mappings (compatible with vband USB adapter):
+    - Dit: Left Ctrl or `[` key
+    - Dah: Right Ctrl or `]` key
+  - Prevents default browser behavior for CW keys
+- **Practice-Aware:** Only processes input when Send Practice module is active
+- **Integration:** Creates synthetic keyboard events to interface with existing keyer logic
+- Based on Vail Repeater MIDI implementation
 
 ### [training/training.css](training/training.css)
 - Custom dark theme optimized for extended practice sessions
@@ -211,7 +227,7 @@ Vail Training Tools/
    - Properly handled as single units in morse playback
 
 ### Send Practice (Implemented)
-A dedicated module for practicing sending Morse code with real-time feedback. Uses the same USB CW key support system as the QSO Simulator, providing a focused environment for developing clean, accurate sending skills.
+A dedicated module for practicing sending Morse code with real-time feedback. Supports both MIDI CW keys (Vail adapter) and keyboard mode (vband adapter), providing a focused environment for developing clean, accurate sending skills.
 
 **Practice Modes:**
 1. **Random Letters** - Single random letters (A-Z)
@@ -225,10 +241,21 @@ A dedicated module for practicing sending Morse code with real-time feedback. Us
 - **Iambic B (mode 3)** - Advanced squeeze keying with dit/dah alternation
 - **Ultimatic (mode 4)** - Last-pressed-key priority mode
 
-**Key Mappings:**
+**Input Methods:**
+
+*MIDI Mode (Vail Adapter):*
+- Supports Web MIDI API for direct connection to Vail MIDI adapter
+- Automatically detects and connects to MIDI devices
+- Supports Vail Adapter protocol (notes 0, 1, 2)
+- Supports N6ARA TinyMIDI protocol (notes 20, 21)
+- Sends configuration to adapter (dit duration, keyer mode)
+- Hot-plug support (auto-reconnects when device is plugged in)
+
+*Keyboard Mode (vband Adapter):*
 - **Dit:** Left Ctrl or `[` key
 - **Dah:** Right Ctrl or `]` key
 - Compatible with vband USB CW key adapter (https://www.vailadapter.com)
+- No additional drivers needed
 
 **How It Works:**
 1. Press "Start Practice" to begin
@@ -247,11 +274,16 @@ A dedicated module for practicing sending Morse code with real-time feedback. Us
 - **Manual Skip:** "Next Character" button to skip difficult targets
 
 **Technical Implementation:**
+- **Unified Input Handler:** `morse-input-handler.js` manages both MIDI and keyboard inputs
+- **Web MIDI API:** Direct browser support for MIDI devices (no drivers needed)
+- **Adaptive Input:** Automatically uses MIDI if available, falls back to keyboard
+- **Practice-aware:** Only processes input when Send Practice is active
 - Standalone morse input modules (no ES6 modules, direct script includes)
 - Shared Web Audio API context with copy practice
 - Character-level decoding with callback notification
 - High-frequency oscillator timer for responsive keying
 - 5ms attack/release envelope for click-free sidetone
+- **MIDI Configuration:** Automatically sends dit duration and keyer mode to MIDI adapter
 
 ### QSO Simulator (Implemented)
 A sophisticated pileup training simulator for practicing contest-style and field activation QSOs. Based on the Morse Walker project by W6NYC, heavily customized with Vail branding and color scheme.
@@ -676,9 +708,10 @@ Edit keyer initialization in [training/qso-simulator/src/js/morse-input/keyer.js
 - Core Logic: [training/scripts/training.js](training/scripts/training.js)
 - Styles: [training/training.css](training/training.css)
 - Send Practice Modules:
-  - [training/scripts/morse-sounder.js](training/scripts/morse-sounder.js)
-  - [training/scripts/morse-decoder.js](training/scripts/morse-decoder.js)
-  - [training/scripts/morse-keyer.js](training/scripts/morse-keyer.js)
+  - [training/scripts/morse-sounder.js](training/scripts/morse-sounder.js) - Audio sidetone
+  - [training/scripts/morse-decoder.js](training/scripts/morse-decoder.js) - Dit/dah to character
+  - [training/scripts/morse-keyer.js](training/scripts/morse-keyer.js) - Keyer logic
+  - [training/scripts/morse-input-handler.js](training/scripts/morse-input-handler.js) - MIDI + keyboard input
 - QSO Simulator: [training/qso-simulator/](training/qso-simulator/)
 - QSO Simulator USB Modules: [training/qso-simulator/src/js/morse-input/](training/qso-simulator/src/js/morse-input/)
 - Deployment Package: [netlify-deploy/](netlify-deploy/)
@@ -686,6 +719,25 @@ Edit keyer initialization in [training/qso-simulator/src/js/morse-input/keyer.js
 ---
 
 ## Recent Updates
+
+### November 8, 2025 - MIDI Support for Send Practice
+- **Added MIDI CW key support** to Send Practice module
+- Created new `morse-input-handler.js` - unified input manager for both MIDI and keyboard
+- **MIDI Features:**
+  - Web MIDI API integration for direct browser-to-device connection
+  - Auto-detection and connection to MIDI CW keys (Vail adapter, TinyMIDI)
+  - Supports Vail Adapter protocol (MIDI notes 0, 1, 2)
+  - Supports N6ARA TinyMIDI protocol (MIDI notes 20, 21)
+  - Hot-plug support with automatic device reconnection
+  - Automatic configuration of adapter (dit duration, keyer mode)
+  - Graceful key release on device disconnect
+- **Keyboard Support Maintained:**
+  - Still supports vband keyboard mode (Left/Right Ctrl, `[`/`]` keys)
+  - Seamlessly switches between MIDI and keyboard input
+- **Practice-Aware Input:** Only processes CW key input when Send Practice is active
+- **Architecture:** Based on Vail Repeater MIDI implementation
+- Updated documentation with complete MIDI support details
+- Files updated: `morse-input-handler.js` (new), `training.js`, `index.html`
 
 ### November 8, 2025 - Copy Practice Enhancements
 - **Added CW Academy mode** with 10 progressive beginner sessions

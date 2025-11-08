@@ -1,0 +1,4 @@
+# Redirect QSO Simulator paths to the built app in dist folder
+/qso-simulator/index.html /qso-simulator/dist/index.html 200
+/qso-simulator/* /qso-simulator/dist/:splat 200
+/qso-simulator /qso-simulator/dist/index.html 200

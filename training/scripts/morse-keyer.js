@@ -14,7 +14,7 @@ class MorseKeyer {
 
     this.wpm = 20;
     this.unit = 60; // Length of dit in milliseconds
-    this.mode = 2; // 1: straight key, 2: iambicA, 3: iambicB, 4: ultimatic
+    this.mode = 7; // Vail adapter protocol: 1=straight, 5=ultimatic, 7=iambicA, 8=iambicB
     this.tone = 600;
 
     this.queue = [];
@@ -89,7 +89,9 @@ class MorseKeyer {
     }
 
     if (mode > 1) {
+      let key = -1;
       if (event.code === this.ditKey1 || event.code === this.ditKey2) {
+        key = 1; // dit
         if (down) {
           this.ditKeyState = 1;
           this.ditStart = Date.now();
@@ -99,12 +101,28 @@ class MorseKeyer {
         }
       }
       if (event.code === this.dahKey1 || event.code === this.dahKey2) {
+        key = 2; // dah
         if (down) {
           this.dahKeyState = 1;
           this.dahStart = Date.now();
         } else {
           this.dahKeyState = 0;
           this.dahStop = Date.now();
+        }
+      }
+
+      // Mode-specific queueing on key press
+      if (down && key > 0) {
+        // Mode 5 (Ultimatic): Queue every key press
+        if (mode === 5) {
+          this.queue.push(key);
+        }
+        // Mode 7 (Iambic A): No queuing on single key press
+        // Mode 8 (Iambic B): Queue if different from what's sending (for extra element)
+        else if (mode === 8 && this.lastKey !== key && this.sending) {
+          if (!this.queue.includes(key)) {
+            this.queue.push(key);
+          }
         }
       }
     }
@@ -122,47 +140,62 @@ class MorseKeyer {
   }
 
   oscillate() {
-    // Iambic mode queue clearing logic
-    if (this.mode === 2 && !this.ditKeyState && !this.dahKeyState && this.queue.length) {
-      if (this.queue[0] === 1) {
-        // Dit is in the queue
-        if (this.ditStart < this.dahStart || this.ditStop - this.ditStart > this.unit * 4) {
-          this.queue.pop();
-        }
-      } else {
-        // Dah is in the queue
-        if (this.dahStart < this.ditStart || this.dahStop - this.dahStart > this.unit * 2) {
-          this.queue.pop();
-        }
+    // Determine what to send next based on mode
+    let shouldQueue = false;
+    let keyToQueue = -1;
+
+    // Mode 5 (Ultimatic) - repeat the currently held key, most recent press wins
+    if (this.mode === 5 && !this.sending && this.queue.length === 0) {
+      // Add all currently pressed keys to queue
+      if (this.ditKeyState && !this.queue.includes(1)) {
+        this.queue.push(1);
+      }
+      if (this.dahKeyState && !this.queue.includes(2)) {
+        this.queue.push(2);
       }
     }
 
-    if (this.ditKeyState) {
-      if (this.queue.length === 0) {
-        if ((!this.dahKeyState && !this.sending) || this.lastKey === 2) {
-          this.queue.push(1);
-        }
-      } else {
-        // Dah key was lifted and is still in queue
-        if (this.mode === 2 && !this.dahKeyState && this.dahStart < this.ditStart && this.queue[0] === 2) {
-          this.queue.pop();
-        }
+    // Mode 7 (Iambic A) - basic alternation, no extra element
+    if (this.mode === 7 && this.queue.length === 0) {
+      if (this.ditKeyState && (!this.dahKeyState && !this.sending)) {
+        shouldQueue = true;
+        keyToQueue = 1; // dit
+      } else if (this.dahKeyState && (!this.ditKeyState && !this.sending)) {
+        shouldQueue = true;
+        keyToQueue = 2; // dah
       }
     }
 
-    if (this.dahKeyState) {
-      if (this.queue.length === 0) {
-        if ((!this.ditKeyState && !this.sending) || this.lastKey === 1) {
-          this.queue.push(2);
-        }
-      } else {
-        // Dit key was lifted and is still in queue
-        if (this.mode === 2 && !this.ditKeyState && this.ditStart < this.dahStart && this.queue[0] === 1) {
-          this.queue.pop();
-        }
+    // Mode 8 (Iambic B) - handled primarily in press() function
+    // The extra element is queued when opposite key is pressed during send
+    if (this.mode === 8 && !this.sending && this.queue.length === 0) {
+      // Only queue if a single key is held
+      if (this.ditKeyState && !this.dahKeyState) {
+        this.queue.push(1);
+      } else if (this.dahKeyState && !this.ditKeyState) {
+        this.queue.push(2);
       }
     }
 
+    // For Iambic modes (7 and 8), alternate when both keys pressed (squeeze keying)
+    if ((this.mode === 7 || this.mode === 8) && this.ditKeyState && this.dahKeyState) {
+      // Both keys pressed - alternate
+      if (this.lastKey === 1) {
+        keyToQueue = 2; // Just sent dit, queue dah
+      } else if (this.lastKey === 2) {
+        keyToQueue = 1; // Just sent dah, queue dit
+      } else {
+        keyToQueue = 1; // Default to dit if no previous key
+      }
+      shouldQueue = true;
+    }
+
+    // Add to queue if determined
+    if (shouldQueue && keyToQueue > 0 && this.queue.length === 0) {
+      this.queue.push(keyToQueue);
+    }
+
+    // Process queue when not sending and enough time has passed
     if (!this.sending && Date.now() - this.lastSendTimestamp > this.unit) {
       this.processQueue();
     }

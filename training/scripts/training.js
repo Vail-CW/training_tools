@@ -156,21 +156,56 @@ document.addEventListener('DOMContentLoaded', () => {
 	if (wpmSlider) {
 		const wpmOutput = document.querySelector('output[for="practice-wpm"]');
 		wpmSlider.addEventListener('input', (e) => {
-			currentSpeed = e.target.value;
-			wpmOutput.textContent = e.target.value;
-			document.getElementById('stat-speed').textContent = `${e.target.value} WPM`;
+			const wpm = parseInt(e.target.value);
+			currentSpeed = wpm;
+			wpmOutput.textContent = wpm;
+			document.getElementById('stat-speed').textContent = `${wpm} WPM`;
+
+			// Update send speed display
+			const sendSpeedDisplay = document.getElementById('send-speed-display');
+			if (sendSpeedDisplay) {
+				sendSpeedDisplay.textContent = `${wpm} WPM`;
+			}
+
+			// Update morse keyer and input handler if initialized
+			if (morseKeyer) {
+				morseKeyer.setWpm(wpm);
+			}
+			if (morseInputHandler) {
+				const ditDuration = Math.round(60000 / (wpm * 50));
+				morseInputHandler.setDitDuration(ditDuration);
+			}
 		});
 		wpmOutput.textContent = wpmSlider.value;
+
+		// Initialize send speed display
+		const sendSpeedDisplay = document.getElementById('send-speed-display');
+		if (sendSpeedDisplay) {
+			sendSpeedDisplay.textContent = `${wpmSlider.value} WPM`;
+		}
 	}
 
-	// Update volume display
+	// Update volume display and save to localStorage
 	const volumeSlider = document.getElementById('masterGain');
 	if (volumeSlider) {
 		const volumeOutput = document.querySelector('output[for="masterGain"]');
+
+		// Load saved volume from localStorage
+		const savedVolume = localStorage.getItem('vailTrainingVolume');
+		if (savedVolume !== null) {
+			volumeSlider.value = savedVolume;
+			volumeOutput.textContent = savedVolume;
+			console.log('Loaded volume from localStorage:', savedVolume);
+		} else {
+			volumeOutput.textContent = volumeSlider.value;
+		}
+
 		volumeSlider.addEventListener('input', (e) => {
-			volumeOutput.textContent = e.target.value;
+			const volume = e.target.value;
+			volumeOutput.textContent = volume;
+			localStorage.setItem('vailTrainingVolume', volume);
+			console.log('Saved volume to localStorage:', volume);
 		});
-		volumeOutput.textContent = volumeSlider.value;
 	}
 
 	// Update tone frequency display
@@ -796,9 +831,17 @@ document.addEventListener('DOMContentLoaded', () => {
 	let sendPracticing = false;
 	let targetChar = '';
 	let sentChars = '';
+	let lastTargetChar = ''; // Track last target to avoid duplicates
 	let morseKeyer = null;
 	let morseDecoder = null;
 	let morseSounder = null;
+	let morseInputHandler = null;
+
+	// Send Practice stats
+	let sendStats = {
+		attempts: 0,
+		correct: 0
+	};
 
 	const startSendBtn = document.getElementById('start-send-btn');
 	const stopSendBtn = document.getElementById('stop-send-btn');
@@ -822,17 +865,32 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Initialize keyer
 			morseKeyer = new MorseKeyer(morseSounder, morseDecoder);
 
+			// Initialize unified input handler (MIDI + Keyboard)
+			// Pass callback to check if send practice is active
+			morseInputHandler = new MorseInputHandler(morseKeyer, () => sendPracticing);
+
 			// Set initial settings
 			const toneSlider = document.getElementById('tone-freq');
 			const tone = toneSlider ? parseFloat(toneSlider.value) : 600;
 			morseKeyer.setTone(tone);
-			morseKeyer.setWpm(20);
+
+			// Get current WPM from Send Practice slider (or use default)
+			const sendWpmSlider = document.getElementById('send-wpm');
+			const wpm = sendWpmSlider ? parseInt(sendWpmSlider.value) : 20;
+			morseKeyer.setWpm(wpm);
 
 			// Set keyer mode
-			const mode = keyerModeSelect ? keyerModeSelect.value : '2';
+			const mode = keyerModeSelect ? parseInt(keyerModeSelect.value) : 2;
 			morseKeyer.setMode(mode);
+			morseInputHandler.setKeyerMode(mode);
 
-			console.log('Morse input system initialized');
+			// Update dit duration for MIDI adapter
+			const ditDuration = Math.round(60000 / (wpm * 50));
+			morseInputHandler.setDitDuration(ditDuration);
+
+			console.log('Morse input initialized with WPM:', wpm, 'Mode:', mode, 'Dit:', ditDuration, 'ms');
+
+			console.log('Morse input system initialized (MIDI + Keyboard)');
 		}
 	}
 
@@ -855,12 +913,83 @@ document.addEventListener('DOMContentLoaded', () => {
 			}, 200);
 		}
 
-		// Check if character matches target
-		if (char.toUpperCase() === targetChar.toUpperCase()) {
-			// Correct! Generate new target after a brief delay
+		// Check if sent characters match target
+		const targetUpper = targetChar.toUpperCase();
+		const sentUpper = sentChars.toUpperCase();
+
+		if (sentUpper === targetUpper) {
+			// Correct! Clear sent field and generate new target
+			console.log('Correct! Sent:', sentUpper, 'Target:', targetUpper);
+			sendStats.attempts++;
+			sendStats.correct++;
+			updateSendStats();
+
+			sentChars = '';
+			if (sentOutput) {
+				sentOutput.value = '';
+			}
 			setTimeout(() => {
 				generateNewTarget();
 			}, 500);
+		} else if (sentChars.length >= targetChar.length) {
+			// Wrong - sent enough characters but doesn't match
+			console.log('Wrong! Sent:', sentUpper, 'Target:', targetUpper);
+			sendStats.attempts++;
+			updateSendStats();
+
+			// Show visual feedback for wrong answer
+			if (sentOutput) {
+				sentOutput.style.borderColor = '#ff3860'; // Red border
+				setTimeout(() => {
+					sentOutput.style.borderColor = '';
+				}, 500);
+			}
+
+			// Clear sent field after brief delay
+			setTimeout(() => {
+				sentChars = '';
+				if (sentOutput) {
+					sentOutput.value = '';
+				}
+			}, 800);
+		} else if (!targetUpper.startsWith(sentUpper)) {
+			// Wrong character in sequence - clear immediately
+			console.log('Wrong character! Sent:', sentUpper, 'Target:', targetUpper);
+			sendStats.attempts++;
+			updateSendStats();
+
+			// Show visual feedback
+			if (sentOutput) {
+				sentOutput.style.borderColor = '#ff3860'; // Red border
+				setTimeout(() => {
+					sentOutput.style.borderColor = '';
+				}, 500);
+			}
+
+			// Clear sent field
+			setTimeout(() => {
+				sentChars = '';
+				if (sentOutput) {
+					sentOutput.value = '';
+				}
+			}, 500);
+		}
+		// Otherwise, continue collecting characters (partial match so far)
+	}
+
+	// Update send practice stats display
+	function updateSendStats() {
+		const attemptsEl = document.getElementById('stat-attempts');
+		const correctEl = document.getElementById('stat-correct');
+		const accuracyEl = document.getElementById('stat-accuracy');
+
+		if (attemptsEl) attemptsEl.textContent = sendStats.attempts;
+		if (correctEl) correctEl.textContent = sendStats.correct;
+		if (accuracyEl) {
+			const accuracy = sendStats.attempts > 0
+				? Math.round((sendStats.correct / sendStats.attempts) * 100)
+				: 0;
+			accuracyEl.textContent = `${accuracy}%`;
 		}
 	}
 
@@ -870,6 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		const mode = sendModeSelect ? sendModeSelect.value : 'letters';
 		let characters = '';
+		let newTarget = '';
 
 		switch (mode) {
 			case 'letters':
@@ -882,16 +1012,30 @@ document.addEventListener('DOMContentLoaded', () => {
 				characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 				break;
 			case 'words':
-				// For words mode, pick a random word
-				targetChar = commonWords[Math.floor(Math.random() * commonWords.length)];
+				// For words mode, pick a random word (avoid duplicates)
+				let wordPool = commonWords.filter(w => w !== lastTargetChar);
+				if (wordPool.length === 0) wordPool = commonWords; // Fallback if only one word
+				newTarget = wordPool[Math.floor(Math.random() * wordPool.length)];
+				targetChar = newTarget;
+				lastTargetChar = newTarget;
 				if (targetCharDisplay) {
 					targetCharDisplay.innerHTML = targetChar;
 				}
 				return;
 		}
 
-		// Pick random character
-		targetChar = characters.charAt(Math.floor(Math.random() * characters.length));
+		// Pick random character (avoid duplicates)
+		if (characters.length > 1) {
+			// Remove last target from pool to avoid duplicates
+			let charPool = characters.split('').filter(c => c !== lastTargetChar).join('');
+			if (charPool.length === 0) charPool = characters; // Fallback if only one char
+			newTarget = charPool.charAt(Math.floor(Math.random() * charPool.length));
+		} else {
+			newTarget = characters;
+		}
+
+		targetChar = newTarget;
+		lastTargetChar = newTarget;
 		if (targetCharDisplay) {
 			targetCharDisplay.innerHTML = targetChar;
 		}
@@ -902,9 +1046,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		console.log('Starting send practice...');
 		sendPracticing = true;
 		sentChars = '';
+		lastTargetChar = ''; // Reset to allow any first character
 
-		// Initialize morse input if needed
-		initMorseInput();
+		// Reset stats
+		sendStats.attempts = 0;
+		sendStats.correct = 0;
+		updateSendStats();
 
 		// Update UI
 		if (startSendBtn) startSendBtn.disabled = true;
@@ -949,34 +1096,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Update keyer mode when changed
 	if (keyerModeSelect) {
-		keyerModeSelect.addEventListener('change', (e) => {
+		// Load saved keyer mode from localStorage
+		const savedKeyerMode = localStorage.getItem('vailTrainingKeyerMode');
+		if (savedKeyerMode !== null) {
+			keyerModeSelect.value = savedKeyerMode;
+			const mode = parseInt(savedKeyerMode);
 			if (morseKeyer) {
-				morseKeyer.setMode(e.target.value);
-				console.log('Keyer mode changed to:', e.target.value);
+				morseKeyer.setMode(mode);
 			}
+			if (morseInputHandler) {
+				morseInputHandler.setKeyerMode(mode);
+			}
+			console.log('Loaded keyer mode from localStorage:', mode);
+		}
+
+		keyerModeSelect.addEventListener('change', (e) => {
+			const mode = parseInt(e.target.value);
+			if (morseKeyer) {
+				morseKeyer.setMode(mode);
+				console.log('Keyer mode changed to:', mode);
+			}
+			if (morseInputHandler) {
+				morseInputHandler.setKeyerMode(mode);
+				console.log('MIDI keyer mode updated to:', mode);
+			}
+			// Save to localStorage
+			localStorage.setItem('vailTrainingKeyerMode', mode);
+			console.log('Saved keyer mode to localStorage:', mode);
 		});
 	}
 
-	// Global keyboard event handlers for morse input
-	window.addEventListener('keydown', (e) => {
-		if (!sendPracticing || !morseKeyer) return;
+	// Send Practice WPM slider
+	const sendWpmSlider = document.getElementById('send-wpm');
+	if (sendWpmSlider) {
+		const sendWpmOutput = document.querySelector('output[for="send-wpm"]');
 
-		// Prevent default for our control keys
-		if (['ControlLeft', 'ControlRight', 'BracketLeft', 'BracketRight'].includes(e.code)) {
-			e.preventDefault();
+		// Load saved WPM from localStorage
+		const savedWpm = localStorage.getItem('vailTrainingSendWpm');
+		if (savedWpm !== null) {
+			sendWpmSlider.value = savedWpm;
+			sendWpmOutput.textContent = savedWpm;
+			const wpm = parseInt(savedWpm);
+
+			// Update speed display tag
+			const sendSpeedDisplay = document.getElementById('send-speed-display');
+			if (sendSpeedDisplay) {
+				sendSpeedDisplay.textContent = `${wpm} WPM`;
+			}
+
+			// Update morse keyer
+			if (morseKeyer) {
+				morseKeyer.setWpm(wpm);
+			}
+
+			// Update MIDI adapter dit duration
+			if (morseInputHandler) {
+				const ditDuration = Math.round(60000 / (wpm * 50));
+				morseInputHandler.setDitDuration(ditDuration);
+			}
+
+			console.log('Loaded send WPM from localStorage:', wpm);
 		}
 
-		morseKeyer.press(e, true);
-	});
+		sendWpmSlider.addEventListener('input', (e) => {
+			const wpm = parseInt(e.target.value);
+			sendWpmOutput.textContent = wpm;
 
-	window.addEventListener('keyup', (e) => {
-		if (!sendPracticing || !morseKeyer) return;
+			// Update speed display tag
+			const sendSpeedDisplay = document.getElementById('send-speed-display');
+			if (sendSpeedDisplay) {
+				sendSpeedDisplay.textContent = `${wpm} WPM`;
+			}
 
-		// Prevent default for our control keys
-		if (['ControlLeft', 'ControlRight', 'BracketLeft', 'BracketRight'].includes(e.code)) {
-			e.preventDefault();
-		}
+			// Update morse keyer
+			if (morseKeyer) {
+				morseKeyer.setWpm(wpm);
+				console.log('Keyer WPM updated to:', wpm);
+			}
 
-		morseKeyer.press(e, false);
-	});
+			// Update MIDI adapter dit duration
+			if (morseInputHandler) {
+				const ditDuration = Math.round(60000 / (wpm * 50));
+				morseInputHandler.setDitDuration(ditDuration);
+				console.log('MIDI dit duration updated to:', ditDuration, 'ms');
+			}
+
+			// Save to localStorage
+			localStorage.setItem('vailTrainingSendWpm', wpm);
+			console.log('Saved send WPM to localStorage:', wpm);
+		});
+	}
+
+	// NOTE: Keyboard input is now handled by MorseInputHandler
+	// The input handler manages both MIDI and keyboard events globally
+	// However, we need to gate the input based on practice state
+	// This is done inside the input handler
+
+	// Initialize morse input system on page load (for MIDI detection)
+	initMorseInput();
 });

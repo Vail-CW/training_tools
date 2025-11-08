@@ -338,7 +338,7 @@
 							<!-- Practice Controls -->
 							<div class="block">
 								<div class="columns is-variable is-4">
-									<div class="column">
+									<div class="column is-4">
 										<div class="field">
 											<label class="label is-small">Send Mode</label>
 											<div class="control">
@@ -353,18 +353,29 @@
 											</div>
 										</div>
 									</div>
-									<div class="column">
+									<div class="column is-4">
 										<div class="field">
 											<label class="label is-small">Keyer Mode</label>
 											<div class="control">
 												<div class="select is-fullwidth">
 													<select id="keyer-mode">
 														<option value="1">Straight Key</option>
-														<option value="2" selected>Iambic A</option>
-														<option value="3">Iambic B</option>
-														<option value="4">Ultimatic</option>
+														<option value="7" selected>Iambic A</option>
+														<option value="8">Iambic B</option>
+														<option value="5">Ultimatic</option>
 													</select>
 												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">
+												Speed (WPM)
+												<output for="send-wpm" class="has-text-primary" style="float: right; font-weight: bold;">20</output>
+											</label>
+											<div class="control">
+												<input class="slider is-fullwidth is-primary" id="send-wpm" type="range" min="5" max="40" value="20" step="1">
 											</div>
 										</div>
 									</div>
@@ -414,12 +425,30 @@
 							<div class="block">
 								<div class="notification" style="background-color: rgba(0, 134, 102, 0.12); border-left: 4px solid #086; color: #e8e8e8;">
 									<p class="is-size-7">
-										<strong>How to use:</strong> Use your USB CW key adapter (like the vband adapter) or keyboard keys:
+										<strong>How to use:</strong> Use your USB CW key adapter or keyboard keys:
 										<br>
-										<strong>Dit:</strong> Left Ctrl or [ key
+										<strong>MIDI Mode (Vail adapter):</strong> Auto-detected, plug and send!
 										<br>
-										<strong>Dah:</strong> Right Ctrl or ] key
+										<strong>Keyboard Mode (vband):</strong> Left/Right Ctrl or [ / ] keys
 									</p>
+								</div>
+							</div>
+
+							<!-- Input Status -->
+							<div class="block">
+								<div class="field is-grouped is-grouped-multiline">
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">MIDI Device</span>
+											<span class="tag is-danger" id="midi-status">Not Detected</span>
+										</div>
+									</div>
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">Speed</span>
+											<span class="tag is-info" id="send-speed-display">20 WPM</span>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -545,6 +574,7 @@
 		<script src="scripts/morse-sounder.js"></script>
 		<script src="scripts/morse-decoder.js"></script>
 		<script src="scripts/morse-keyer.js"></script>
+		<script src="scripts/morse-input-handler.js"></script>
 		<script src="scripts/training.js"></script>
 	</body>
 </html>

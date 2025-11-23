@@ -31,10 +31,21 @@ class MorseSounder {
     this.gainNode = ctx.createGain();
 
     this.oscillator.connect(this.gainNode);
-    this.gainNode.connect(ctx.destination);
 
     this.oscillator.frequency.value = this.tone;
     this.oscillator.type = 'sine';
+
+    // Check if Free Practice is recording
+    const freePracticeModule = document.getElementById('free-practice-module');
+    const isFreePracticeVisible = freePracticeModule && freePracticeModule.style.display !== 'none';
+    const recordingStatus = document.getElementById('recording-status');
+    const isRecording = isFreePracticeVisible && recordingStatus && recordingStatus.textContent === 'Recording';
+
+    // Only connect to destination if NOT recording
+    // When recording, the training.js patch will connect oscillator to recordingGainNode
+    if (!isRecording) {
+      this.gainNode.connect(ctx.destination);
+    }
 
     // Get volume from settings
     const volumeSlider = document.getElementById('masterGain');

@@ -119,6 +119,11 @@
 							<span>Send Practice</span>
 							<span class="tag is-info is-light ml-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">BETA</span>
 						</button>
+						<button class="button is-medium module-switch-btn" data-module="free-practice">
+							<span class="icon"><i class="mdi mdi-text-box-outline"></i></span>
+							<span>Free Practice</span>
+							<span class="tag is-info is-light ml-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">BETA</span>
+						</button>
 						<button class="button is-medium module-switch-btn" data-module="qso-simulator" onclick="window.location.href='qso-simulator/index.html'">
 							<span class="icon"><i class="mdi mdi-radio-tower"></i></span>
 							<span>QSO Simulator</span>
@@ -454,6 +459,201 @@
 						</div>
 						</div>
 						<!-- End Send Practice Module -->
+
+						<!-- Free Practice Module -->
+						<div id="free-practice-module" class="practice-module" style="display: none;">
+						<div class="box practice-box mb-5">
+							<div class="level mb-4">
+								<div class="level-left">
+									<div class="level-item">
+										<h1 class="title is-4">
+											<span class="icon-text">
+												<span class="icon"><i class="mdi mdi-text-box-outline"></i></span>
+												<span>Free Practice</span>
+											</span>
+										</h1>
+									</div>
+								</div>
+								<div class="level-right">
+									<div class="level-item">
+										<span class="tag free-lamp is-medium">
+											<i class="mdi mdi-pencil"></i>
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Practice Controls -->
+							<div class="block">
+								<div class="columns is-variable is-4">
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">Keyer Mode</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="free-keyer-mode">
+														<option value="1">Straight Key</option>
+														<option value="7" selected>Iambic A</option>
+														<option value="8">Iambic B</option>
+														<option value="5">Ultimatic</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">
+												Speed (WPM)
+												<output for="free-wpm" class="has-text-primary" style="float: right; font-weight: bold;">20</output>
+											</label>
+											<div class="control">
+												<input class="slider is-fullwidth is-primary" id="free-wpm" type="range" min="5" max="40" value="20" step="1">
+											</div>
+										</div>
+									</div>
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">Recording</label>
+											<div class="control">
+												<div class="buttons">
+													<button class="button is-small is-danger" id="start-recording-btn" title="Start Recording">
+														<span class="icon"><i class="mdi mdi-record-circle"></i></span>
+														<span>Record</span>
+													</button>
+													<button class="button is-small is-danger" id="stop-recording-btn" disabled style="display: none;" title="Stop Recording">
+														<span class="icon"><i class="mdi mdi-stop-circle"></i></span>
+														<span>Stop</span>
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Decoded Output Area -->
+							<div class="block">
+								<div class="field">
+									<label class="label is-small">
+										<span class="icon-text">
+											<span>Your Morse Code</span>
+											<span class="icon" id="decoding-indicator" style="display: none;"><i class="mdi mdi-spin mdi-loading"></i></span>
+										</span>
+										<span style="float: right;">
+											<span id="char-count-display" class="tag is-info">0 chars</span>
+											<span id="word-count-display" class="tag is-info ml-2">0 words</span>
+											<span id="speed-indicator" class="tag is-primary ml-2">0 WPM</span>
+										</span>
+									</label>
+									<div class="control">
+										<textarea class="textarea free-practice-output" id="free-practice-output" placeholder="Send morse code using your CW key or keyboard... decoded text will appear here." readonly style="min-height: 200px; font-family: 'Courier New', monospace; font-size: 1.2rem; letter-spacing: 0.05rem; background-color: rgba(0, 0, 0, 0.3); border: 1px solid #2a2a2a;"></textarea>
+									</div>
+								</div>
+							</div>
+
+							<!-- Control Buttons -->
+							<div class="block">
+								<div class="buttons is-centered">
+									<button class="button is-warning is-medium" id="clear-output-btn">
+										<span class="icon"><i class="mdi mdi-eraser"></i></span>
+										<span>Clear Output</span>
+									</button>
+									<button class="button is-info is-medium" id="copy-output-btn">
+										<span class="icon"><i class="mdi mdi-content-copy"></i></span>
+										<span>Copy Text</span>
+									</button>
+								</div>
+							</div>
+
+							<!-- Recording Playback Preview (Hidden until recording is stopped) -->
+							<div class="block" id="playback-preview-area" style="display: none;">
+								<div class="notification" style="background-color: rgba(0, 134, 102, 0.12); border-left: 4px solid #00d1b2; color: #e8e8e8;">
+									<p class="has-text-weight-semibold mb-3">
+										<span class="icon"><i class="mdi mdi-play-circle"></i></span>
+										Recording Preview
+									</p>
+									<div class="field has-addons">
+										<div class="control is-expanded">
+											<audio id="playback-audio" controls class="is-fullwidth" style="width: 100%;"></audio>
+										</div>
+									</div>
+									<div class="field is-grouped is-grouped-centered mt-3">
+										<div class="control">
+											<button class="button is-success" id="download-recording-btn">
+												<span class="icon"><i class="mdi mdi-download"></i></span>
+												<span>Save MP3</span>
+											</button>
+										</div>
+										<div class="control">
+											<button class="button" id="discard-recording-btn" style="background-color: #2a2a2a; color: #e8e8e8; border-color: #3a3a3a;">
+												<span class="icon"><i class="mdi mdi-delete"></i></span>
+												<span>Discard</span>
+											</button>
+										</div>
+									</div>
+									<p class="help has-text-centered" style="color: #b8b8b8;">
+										<span class="icon"><i class="mdi mdi-clock-outline"></i></span>
+										<span id="recording-duration-display">Duration: 0:00</span>
+									</p>
+								</div>
+							</div>
+
+							<!-- Free Practice Info -->
+							<div class="block">
+								<div class="notification" style="background-color: rgba(0, 134, 102, 0.12); border-left: 4px solid #086; color: #e8e8e8;">
+									<p class="is-size-7">
+										<strong>Free Practice Mode:</strong> Send morse code freely without constraints. Your sending is decoded in real-time with adaptive speed detection.
+										<br>
+										<strong>Input Methods:</strong>
+										<br>
+										• <strong>MIDI:</strong> Auto-detected Vail adapter or compatible MIDI CW key
+										<br>
+										• <strong>Keyboard:</strong> Left/Right Ctrl (dit/dah) or [ / ] keys
+										<br>
+										<strong>Recording:</strong> Capture your practice session and save as MP3 (10 minute limit)
+										<br>
+										<strong>Prosigns:</strong> Special characters like <code>&lt;AR&gt;</code>, <code>&lt;BT&gt;</code>, <code>&lt;SK&gt;</code> are automatically detected
+									</p>
+								</div>
+							</div>
+
+							<!-- Straight Key Mode Notice -->
+							<div class="block" id="straight-key-notice" style="display: none;">
+								<div class="notification" style="background-color: rgba(255, 221, 87, 0.12); border-left: 4px solid #ffdd57; color: #e8e8e8;">
+									<p class="is-size-7">
+										<strong><span class="icon"><i class="mdi mdi-information"></i></span> Straight Key Mode:</strong>
+										The decoder will adapt to your sending speed automatically. Send a few characters (e.g., "PARIS") to allow the system to learn your timing. Initial decoding may be inaccurate until the adaptive algorithm adjusts.
+									</p>
+								</div>
+							</div>
+
+							<!-- Input Status -->
+							<div class="block">
+								<div class="field is-grouped is-grouped-multiline">
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">MIDI Device</span>
+											<span class="tag is-danger" id="free-midi-status">Not Detected</span>
+										</div>
+									</div>
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">Recording</span>
+											<span class="tag is-light recording-lamp" id="recording-status">Idle</span>
+										</div>
+									</div>
+									<div class="control" id="recording-time-display" style="display: none;">
+										<div class="tags has-addons">
+											<span class="tag">Time</span>
+											<span class="tag is-warning" id="recording-time">0:00</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						</div>
+						<!-- End Free Practice Module -->
 					</div>
 
 					<!-- Right Column: Stats & Info -->
@@ -544,10 +744,12 @@
 				const moduleSwitchBtns = document.querySelectorAll('.module-switch-btn');
 				const copyPracticeModule = document.getElementById('copy-practice-module');
 				const sendPracticeModule = document.getElementById('send-practice-module');
+				const freePracticeModule = document.getElementById('free-practice-module');
 
 				console.log('Found module buttons:', moduleSwitchBtns.length);
 				console.log('Copy module:', copyPracticeModule);
 				console.log('Send module:', sendPracticeModule);
+				console.log('Free module:', freePracticeModule);
 
 				moduleSwitchBtns.forEach(btn => {
 					btn.addEventListener('click', () => {
@@ -558,23 +760,41 @@
 						moduleSwitchBtns.forEach(b => b.classList.remove('is-active'));
 						btn.classList.add('is-active');
 
-						// Show/hide modules
+						// Get stats box element
+						const statsBox = document.querySelector('.stats-box');
+
+						// Show/hide modules and stats box
 						if (targetModule === 'copy-practice') {
 							copyPracticeModule.style.display = 'block';
 							sendPracticeModule.style.display = 'none';
+							freePracticeModule.style.display = 'none';
+							if (statsBox) statsBox.style.display = 'block';
 						} else if (targetModule === 'send-practice') {
 							copyPracticeModule.style.display = 'none';
 							sendPracticeModule.style.display = 'block';
+							freePracticeModule.style.display = 'none';
+							if (statsBox) statsBox.style.display = 'block';
+						} else if (targetModule === 'free-practice') {
+							copyPracticeModule.style.display = 'none';
+							sendPracticeModule.style.display = 'none';
+							freePracticeModule.style.display = 'block';
+							if (statsBox) statsBox.style.display = 'none';
 						}
 					});
 				});
 			});
 		</script>
+		<!-- External libraries for Free Practice -->
+		<script src="lib/lame.min.js"></script>
 		<!-- Morse input modules for send practice -->
 		<script src="scripts/morse-sounder.js"></script>
 		<script src="scripts/morse-decoder.js"></script>
 		<script src="scripts/morse-keyer.js"></script>
 		<script src="scripts/morse-input-handler.js"></script>
+		<!-- Free Practice modules -->
+		<script src="scripts/morse-pro-adapter.js"></script>
+		<script src="scripts/audio-recorder.js"></script>
+		<!-- Main training logic -->
 		<script src="scripts/training.js"></script>
 	</body>
 </html>

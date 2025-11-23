@@ -158,9 +158,40 @@ html, body {
 	box-shadow: 0 0 10px #00d1b2;
 }
 
+/* Free Practice Lamp */
+.tag.free-lamp {
+	background-color: #444;
+	color: white;
+}
+
+.tag.free-lamp.active {
+	background-color: #00d1b2;
+	color: black;
+	box-shadow: 0 0 10px #00d1b2;
+}
+
+/* Recording Lamp - pulsing red animation */
+.tag.recording-lamp.recording {
+	background-color: #ff3860;
+	color: white;
+	animation: pulse-red 1.5s ease-in-out infinite;
+	box-shadow: 0 0 15px #ff3860;
+}
+
 @keyframes pulse {
 	0%, 100% { opacity: 1; }
 	50% { opacity: 0.7; }
+}
+
+@keyframes pulse-red {
+	0%, 100% {
+		opacity: 1;
+		box-shadow: 0 0 15px #ff3860;
+	}
+	50% {
+		opacity: 0.6;
+		box-shadow: 0 0 25px #ff3860;
+	}
 }
 
 /* Range Inputs */
@@ -584,4 +615,107 @@ a:hover {
 #number-selector .button.is-primary {
 	background-color: #00d1b2 !important;
 	color: #fff !important;
+}
+
+/* Free Practice Specific Styles */
+.free-practice-output {
+	color: #e8e8e8 !important;
+	background-color: rgba(0, 0, 0, 0.3) !important;
+	border: 1px solid #2a2a2a !important;
+	font-family: 'Courier New', monospace;
+	font-size: 1.2rem;
+	letter-spacing: 0.05rem;
+	line-height: 1.6;
+	resize: vertical;
+}
+
+.free-practice-output:focus {
+	border-color: #00d1b2 !important;
+	box-shadow: 0 0 0 0.125em rgba(0, 209, 178, 0.25) !important;
+}
+
+/* Prosign formatting in output */
+.prosign {
+	color: #ffdd57;
+	font-weight: bold;
+	background-color: rgba(255, 221, 87, 0.1);
+	padding: 0 0.2em;
+	border-radius: 3px;
+}
+
+/* Decoding indicator spinner */
+#decoding-indicator .mdi-loading {
+	color: #00d1b2;
+}
+
+/* Statistics tags */
+#char-count-display,
+#word-count-display,
+#speed-indicator {
+	font-family: 'Courier New', monospace;
+	font-weight: 600;
+}
+
+/* Playback preview area */
+#playback-preview-area {
+	animation: fadeIn 0.3s ease-in-out;
+}
+
+#playback-audio {
+	background-color: rgba(0, 0, 0, 0.2);
+	border-radius: 8px;
+}
+
+/* Recording controls */
+#start-recording-btn.is-danger,
+#stop-recording-btn.is-danger {
+	transition: all 0.2s ease;
+}
+
+#start-recording-btn.is-danger:hover {
+	transform: scale(1.05);
+	box-shadow: 0 0 15px rgba(255, 56, 96, 0.5);
+}
+
+#stop-recording-btn.is-danger:hover {
+	transform: scale(1.05);
+}
+
+/* Recording time display pulsing */
+#recording-time {
+	animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.8; }
+}
+
+/* Copy button success state */
+#copy-output-btn.is-success {
+	background-color: #48c774 !important;
+	color: white !important;
+}
+
+/* Mobile responsiveness for Free Practice */
+@media screen and (max-width: 768px) {
+	.free-practice-output {
+		font-size: 1rem;
+		min-height: 150px;
+	}
+
+	#char-count-display,
+	#word-count-display,
+	#speed-indicator {
+		font-size: 0.75rem;
+	}
+
+	#playback-preview-area .buttons {
+		flex-direction: column;
+	}
+
+	#playback-preview-area .button {
+		width: 100%;
+		margin-bottom: 0.5rem;
+	}
 }

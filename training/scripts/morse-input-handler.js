@@ -134,18 +134,34 @@ class MorseInputHandler {
   }
 
   updateMIDIStatus() {
+    // Update Send Practice MIDI status
     const statusElement = document.getElementById('midi-status');
-    if (!statusElement) return;
+    if (statusElement) {
+      if (this.midiInputs.length > 0) {
+        const deviceName = this.midiInputs[0].name || 'Unknown Device';
+        statusElement.textContent = `Connected: ${deviceName}`;
+        statusElement.classList.remove('is-danger');
+        statusElement.classList.add('is-success');
+      } else {
+        statusElement.textContent = 'Not Detected';
+        statusElement.classList.remove('is-success');
+        statusElement.classList.add('is-danger');
+      }
+    }
 
-    if (this.midiInputs.length > 0) {
-      const deviceName = this.midiInputs[0].name || 'Unknown Device';
-      statusElement.textContent = `Connected: ${deviceName}`;
-      statusElement.classList.remove('is-danger');
-      statusElement.classList.add('is-success');
-    } else {
-      statusElement.textContent = 'Not Detected';
-      statusElement.classList.remove('is-success');
-      statusElement.classList.add('is-danger');
+    // Update Free Practice MIDI status
+    const freeStatusElement = document.getElementById('free-midi-status');
+    if (freeStatusElement) {
+      if (this.midiInputs.length > 0) {
+        const deviceName = this.midiInputs[0].name || 'Unknown Device';
+        freeStatusElement.textContent = `Connected: ${deviceName}`;
+        freeStatusElement.classList.remove('is-danger');
+        freeStatusElement.classList.add('is-success');
+      } else {
+        freeStatusElement.textContent = 'Not Detected';
+        freeStatusElement.classList.remove('is-success');
+        freeStatusElement.classList.add('is-danger');
+      }
     }
   }
 
@@ -155,8 +171,21 @@ class MorseInputHandler {
     // Parse MIDI command
     const cmd = data[0] >> 4;  // Upper 4 bits = command type
     const channel = data[0] & 0x0f; // Lower 4 bits = channel
-    const note = data[1];      // Note number (identifies key type)
-    const velocity = data[2];  // Note velocity (not used)
+    const byte1 = data[1];     // Data byte 1 (note or CC number)
+    const byte2 = data[2];     // Data byte 2 (velocity or CC value)
+
+    // Handle Control Change messages (adapter reporting settings)
+    if (cmd === 0xb) {  // CC message (0xb0)
+      if (byte1 === 0x01) {  // CC 0x01 = dit duration
+        const ditDuration = byte2;
+        this.handleAdapterDitDuration(ditDuration);
+      }
+      return;
+    }
+
+    // Handle Note On/Off messages (key presses)
+    const note = byte1;
+    const velocity = byte2;
 
     // Determine if key is pressed or released
     let begin;
@@ -268,6 +297,56 @@ class MorseInputHandler {
 
       // Send keyer mode (Program Change 0xC0)
       output.send([0xC0, this.keyerMode]);
+    }
+  }
+
+  handleAdapterDitDuration(ditDuration) {
+    console.log('Adapter reported dit duration:', ditDuration, 'ms');
+
+    // Calculate WPM from dit duration (PARIS method: 50 dit units per word)
+    const wpm = Math.round(60000 / (ditDuration * 50));
+    console.log('Adapter WPM:', wpm);
+
+    // Update the keyer
+    if (this.keyer) {
+      this.keyer.setWpm(wpm);
+    }
+
+    // Update the visible UI slider based on which module is active
+    const freePracticeModule = document.getElementById('free-practice-module');
+    const sendPracticeModule = document.getElementById('send-practice-module');
+
+    if (freePracticeModule && freePracticeModule.style.display !== 'none') {
+      // Update Free Practice slider
+      const freeWpmSlider = document.getElementById('free-wpm');
+      const freeWpmOutput = document.querySelector('output[for="free-wpm"]');
+      if (freeWpmSlider) {
+        freeWpmSlider.value = wpm;
+        if (freeWpmOutput) {
+          freeWpmOutput.textContent = wpm;
+        }
+        // Save to localStorage
+        localStorage.setItem('vailTrainingFreeWpm', wpm);
+        console.log('Updated Free Practice WPM slider to:', wpm);
+      }
+    } else if (sendPracticeModule && sendPracticeModule.style.display !== 'none') {
+      // Update Send Practice slider
+      const sendWpmSlider = document.getElementById('send-wpm');
+      const sendWpmOutput = document.querySelector('output[for="send-wpm"]');
+      if (sendWpmSlider) {
+        sendWpmSlider.value = wpm;
+        if (sendWpmOutput) {
+          sendWpmOutput.textContent = wpm;
+        }
+        // Update speed display tag
+        const sendSpeedDisplay = document.getElementById('send-speed-display');
+        if (sendSpeedDisplay) {
+          sendSpeedDisplay.textContent = `${wpm} WPM`;
+        }
+        // Save to localStorage
+        localStorage.setItem('vailTrainingSendWpm', wpm);
+        console.log('Updated Send Practice WPM slider to:', wpm);
+      }
     }
   }
 

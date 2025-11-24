@@ -33,6 +33,13 @@ import { getYourStation, getCallingStation } from './stationGenerator.js';
 import { updateStaticIntensity } from './audio.js';
 import { modeLogicConfig, modeUIConfig } from './modes.js';
 import { morseInput } from './morse-input/morse-input.js'; // Import morse input functionality
+import {
+  shouldDisplayTxText,
+  prepareTxText,
+  createHighlightCallback,
+  clearHighlights,
+  highlightChar
+} from './txTextDisplay.js';
 
 /**
  * Application state variables.
@@ -199,14 +206,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   infoField.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && tuButton.style.display !== 'none') {
+    const tuButtonContainer = document.getElementById('tuButtonContainer');
+    if (event.key === 'Enter' && tuButtonContainer.style.display !== 'none') {
       event.preventDefault();
       tuButton.click();
     }
   });
 
   infoField2.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && tuButton.style.display !== 'none') {
+    const tuButtonContainer = document.getElementById('tuButtonContainer');
+    if (event.key === 'Enter' && tuButtonContainer.style.display !== 'none') {
       event.preventDefault();
       tuButton.click();
     }
@@ -334,30 +343,32 @@ function getModeConfig() {
  */
 function applyModeSettings(mode) {
   const config = modeUIConfig[mode];
-  const tuButton = document.getElementById('tuButton');
+  const tuButtonContainer = document.getElementById('tuButtonContainer');
+  const infoFieldContainer = document.getElementById('infoFieldContainer');
   const infoField = document.getElementById('infoField');
+  const infoField2Container = document.getElementById('infoField2Container');
   const infoField2 = document.getElementById('infoField2');
   const resultsTable = document.getElementById('resultsTable');
   const modeResultsHeader = document.getElementById('modeResultsHeader');
 
   // TU button visibility
-  tuButton.style.display = config.showTuButton ? 'inline-block' : 'none';
+  tuButtonContainer.style.display = config.showTuButton ? 'block' : 'none';
 
   // Info field visibility & placeholder
   if (config.showInfoField) {
-    infoField.style.display = 'inline-block';
+    infoFieldContainer.style.display = 'block';
     infoField.placeholder = config.infoFieldPlaceholder;
   } else {
-    infoField.style.display = 'none';
+    infoFieldContainer.style.display = 'none';
     infoField.value = '';
   }
 
   // Info field 2 visibility & placeholder
   if (config.showInfoField2) {
-    infoField2.style.display = 'inline-block';
+    infoField2Container.style.display = 'block';
     infoField2.placeholder = config.infoField2Placeholder;
   } else {
-    infoField2.style.display = 'none';
+    infoField2Container.style.display = 'none';
     infoField2.value = '';
   }
 
@@ -451,11 +462,26 @@ function cq() {
   yourStation.player = createMorsePlayer(yourStation);
 
   let cqMsg = modeConfig.cqMessage(yourStation, null, null);
+
+  // Prepare TX text display for CQ
+  const cqTxText = document.getElementById('cqTxText');
+  prepareTxText(cqTxText, cqMsg);
+  const cqCallback = shouldDisplayTxText() ? createHighlightCallback(cqTxText) : null;
+
   let yourResponseTimer = yourStation.player.playSentence(
     cqMsg,
-    audioContext.currentTime + backgroundStaticDelay
+    audioContext.currentTime + backgroundStaticDelay,
+    cqCallback
   );
   updateAudioLock(yourResponseTimer);
+
+  // Auto-focus response field after CQ is sent
+  if (shouldDisplayTxText()) {
+    const responseField = document.getElementById('responseField');
+    setTimeout(() => {
+      responseField.focus();
+    }, (yourResponseTimer - audioContext.currentTime) * 1000);
+  }
 
   if (modeConfig.showTuStep) {
     // Contest-like modes: CQ adds more stations
@@ -496,11 +522,16 @@ function send() {
 
   console.log(`--> Sending "${responseFieldText}"`);
 
+  // Prepare TX text display for Send
+  const sendTxText = document.getElementById('sendTxText');
+  prepareTxText(sendTxText, responseFieldText);
+  const sendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
+
   if (modeConfig.showTuStep) {
     // Multi-station scenario
     if (currentStations.length === 0) return;
 
-    let yourResponseTimer = yourStation.player.playSentence(responseFieldText);
+    let yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
     updateAudioLock(yourResponseTimer);
 
     // Handling repeats
@@ -584,9 +615,19 @@ function send() {
           );
         }
 
+        // Update the TX text display to show the full message (callsign + exchange)
+        const fullMessage = responseFieldText + yourExchange;
+        prepareTxText(sendTxText, fullMessage);
+        const fullSendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
+
+        // Play the exchange part with highlighting starting from where the callsign left off
         let yourResponseTimer2 = yourStation.player.playSentence(
           yourExchange,
-          yourResponseTimer
+          yourResponseTimer,
+          fullSendCallback ? (index, token) => {
+            // Offset the index by the length of the callsign already sent
+            highlightChar(sendTxText, responseFieldText.length + index);
+          } : null
         );
         updateAudioLock(yourResponseTimer2);
         let theirResponseTimer = currentStations[
@@ -595,7 +636,12 @@ function send() {
         updateAudioLock(theirResponseTimer);
         currentStationAttempts++;
 
-        if (modeConfig.requiresInfoField) {
+        // Auto-focus info field after exchange is complete (if in display-tx-text mode)
+        if (shouldDisplayTxText() && modeConfig.requiresInfoField) {
+          setTimeout(() => {
+            infoField.focus();
+          }, (theirResponseTimer - audioContext.currentTime) * 1000);
+        } else if (modeConfig.requiresInfoField) {
           infoField.focus();
         }
         readyForTU = true;
@@ -804,9 +850,15 @@ function tu() {
     arbitrary
   );
 
+  // Prepare TX text display for TU
+  const tuTxText = document.getElementById('tuTxText');
+  prepareTxText(tuTxText, yourSignoffMessage);
+  const tuCallback = shouldDisplayTxText() ? createHighlightCallback(tuTxText) : null;
+
   let yourResponseTimer = yourStation.player.playSentence(
     yourSignoffMessage,
-    audioContext.currentTime + 0.5
+    audioContext.currentTime + 0.5,
+    tuCallback
   );
   updateAudioLock(yourResponseTimer);
 

@@ -313,9 +313,10 @@ export function createMorsePlayer(station, volumeOverride = null) {
    *
    * @param {string} sentence - The sentence to play.
    * @param {number} startTime - The starting time for playback, defaults to current time.
+   * @param {function} onCharCallback - Optional callback(charIndex, startTime) called when each character starts
    * @returns {number} The final time after the sentence is played.
    */
-  function playSentence(sentence, startTime = context.currentTime) {
+  function playSentence(sentence, startTime = context.currentTime, onCharCallback = null) {
     // Uncomment the following line to log the sentence being played (for debugging)
     // console.log(`/ Playing sentence: ${sentence}`);
 
@@ -323,6 +324,16 @@ export function createMorsePlayer(station, volumeOverride = null) {
     const tokens = tokenize(sentence);
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
+
+      // Call the callback before playing the token
+      if (onCharCallback && token !== ' ') {
+        // Schedule the callback to execute at the correct time
+        const charTime = time;
+        setTimeout(() => {
+          onCharCallback(i, token);
+        }, (charTime - context.currentTime) * 1000);
+      }
+
       time = playToken(token, time);
     }
     return time;

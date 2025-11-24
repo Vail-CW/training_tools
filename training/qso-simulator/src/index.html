@@ -935,58 +935,89 @@
       </div>
       <hr />
 
+      <!-- Difficulty Level Row -->
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-6 col-lg-4">
+          <label for="difficultyLevel" class="form-label">Difficulty Level</label>
+          <select id="difficultyLevel" class="form-select">
+            <option value="no-text">No Activation Text</option>
+            <option value="display-tx-text">Activation Text - Display Only</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Mode Controls and Stop/Reset -->
       <div class="row g-3 align-items-center">
         <!-- Main controls: On large screens, this and the stop/reset fit on one line.
              On medium screens, these controls form the first row.
              On small screens, these will form the first and second rows. -->
         <div class="col-12 col-lg-9 d-flex flex-wrap align-items-center">
-          <!-- First row on small: CQ, Response Text Box, Send -->
-          <button id="cqButton" class="btn btn-success me-2 mb-2">CQ</button>
-          <input
-            type="text"
-            id="responseField"
-            class="form-control me-2 mb-2"
-            style="max-width: 150px"
-            placeholder="Response"
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            autocorrect="off"
-          />
-          <button id="sendButton" class="btn btn-primary me-2 mb-2">
-            Send
-          </button>
+          <!-- CQ Button with TX Text Display -->
+          <div class="w-100 mb-2" id="cqButtonContainer">
+            <button id="cqButton" class="btn btn-success me-2">CQ</button>
+            <span id="cqTxText" class="tx-text" style="display: none;"></span>
+          </div>
 
-          <!-- Force a new line after sendButton on small screens -->
-          <div class="w-100 d-sm-block d-md-none"></div>
+          <!-- Response Text Box -->
+          <div class="w-100 mb-2" id="responseContainer">
+            <input
+              type="text"
+              id="responseField"
+              class="form-control me-2"
+              style="max-width: 150px; display: inline-block;"
+              placeholder="Response"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              autocorrect="off"
+            />
+          </div>
 
-          <!-- Second row on small: infoField, infoField2, TU -->
-          <input
-            type="text"
-            id="infoField"
-            class="form-control me-2 mb-2"
-            style="display: none; max-width: 150px"
-            placeholder=""
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            autocorrect="off"
-          />
-          <input
-            type="text"
-            id="infoField2"
-            class="form-control me-2 mb-2"
-            style="display: none; max-width: 150px"
-            placeholder=""
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            autocorrect="off"
-          />
-          <button id="tuButton" class="btn btn-info mb-2" style="display: none">
-            TU
-          </button>
+          <!-- Send Button with TX Text Display -->
+          <div class="w-100 mb-2" id="sendButtonContainer">
+            <button id="sendButton" class="btn btn-primary me-2">
+              Send
+            </button>
+            <span id="sendTxText" class="tx-text" style="display: none;"></span>
+          </div>
+
+          <!-- Info Field (State) -->
+          <div class="w-100 mb-2" id="infoFieldContainer" style="display: none;">
+            <input
+              type="text"
+              id="infoField"
+              class="form-control me-2"
+              style="max-width: 150px; display: inline-block;"
+              placeholder=""
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              autocorrect="off"
+            />
+          </div>
+
+          <!-- Info Field 2 -->
+          <div class="w-100 mb-2" id="infoField2Container" style="display: none;">
+            <input
+              type="text"
+              id="infoField2"
+              class="form-control me-2"
+              style="max-width: 150px; display: inline-block;"
+              placeholder=""
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              autocorrect="off"
+            />
+          </div>
+
+          <!-- TU Button with TX Text Display -->
+          <div class="w-100 mb-2" id="tuButtonContainer" style="display: none;">
+            <button id="tuButton" class="btn btn-info me-2">
+              TU
+            </button>
+            <span id="tuTxText" class="tx-text" style="display: none;"></span>
+          </div>
         </div>
 
         <!-- Stop & Reset: On large, same row as above.

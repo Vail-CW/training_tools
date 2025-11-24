@@ -634,7 +634,7 @@ function send() {
   let yourResponseTimer;
   let sendCallback = null;
 
-  // In send practice mode, don't set up the handler yet - wait until callsign is validated
+  // Set up callback for display modes (not send practice)
   if (!isSendPracticeMode()) {
     sendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
   }
@@ -643,9 +643,20 @@ function send() {
     // Multi-station scenario
     if (currentStations.length === 0) return;
 
-    if (!isSendPracticeMode()) {
+    // Check for match type first to determine if we should play audio
+    let results = currentStations.map((stn) =>
+      compareStrings(stn.callsign, responseFieldText.replace('?', ''))
+    );
+    let hasQuestionMark = responseFieldText.includes('?');
+    let isPerfectMatch = results.includes('perfect') && !hasQuestionMark;
+
+    // Play user's response audio unless it's a perfect match in send practice mode
+    if (!(isSendPracticeMode() && isPerfectMatch)) {
       yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
       updateAudioLock(yourResponseTimer);
+    } else {
+      // In send practice mode with perfect match, don't play audio
+      yourResponseTimer = audioContext.currentTime;
     }
 
     // Handling repeats
@@ -681,11 +692,7 @@ function send() {
       return;
     }
 
-    let results = currentStations.map((stn) =>
-      compareStrings(stn.callsign, responseFieldText.replace('?', ''))
-    );
-    let hasQuestionMark = responseFieldText.includes('?');
-
+    // results and hasQuestionMark already calculated above
     if (results.includes('perfect')) {
       let matchIndex = results.indexOf('perfect');
       if (hasQuestionMark) {

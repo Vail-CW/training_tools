@@ -134,3 +134,14 @@ input[type='text']::placeholder {
 .tx-text .char.active {
   color: #00ff00;
 }
+
+/* Decoded Text Display Styles */
+.decoded-text {
+  font-family: monospace;
+  font-size: 1.1em;
+  letter-spacing: 0.1em;
+  display: inline-block;
+  margin-left: 0.5em;
+  color: #00ff00;
+  margin-top: 0.25em;
+}

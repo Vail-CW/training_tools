@@ -35,10 +35,15 @@ import { modeLogicConfig, modeUIConfig } from './modes.js';
 import { morseInput } from './morse-input/morse-input.js'; // Import morse input functionality
 import {
   shouldDisplayTxText,
+  isSendPracticeMode,
   prepareTxText,
   createHighlightCallback,
   clearHighlights,
-  highlightChar
+  highlightChar,
+  markCharCorrect,
+  markCharIncorrect,
+  getExpectedText,
+  getCurrentProgressIndex
 } from './txTextDisplay.js';
 
 /**
@@ -69,6 +74,12 @@ let totalContacts = 0;
 let yourStation = null;
 let lastRespondingStations = null;
 const farnsworthLowerBy = 6;
+
+// Send practice mode state
+let sendPracticeActive = false;
+let sendPracticeExpectedText = '';
+let sendPracticeCurrentIndex = 0;
+let sendPracticePendingResponse = null; // Stores the pending response callback
 
 /**
  * Event listener setup.
@@ -433,6 +444,57 @@ function changeMode() {
 }
 
 /**
+ * Handles characters decoded in send practice mode
+ * @param {string} letter - The decoded letter
+ * @returns {boolean} True if handled
+ */
+function handleSendPracticeCharacter(letter) {
+  if (!sendPracticeActive) return false;
+
+  const letterUpper = letter.toUpperCase();
+
+  // Determine which decoded text element to use (CQ or Send)
+  const cqDecodedText = document.getElementById('cqDecodedText');
+  const sendDecodedText = document.getElementById('sendDecodedText');
+  const cqTxText = document.getElementById('cqTxText');
+  const sendTxText = document.getElementById('sendTxText');
+
+  let decodedTextEl, txTextEl;
+
+  // Check which mode we're in based on which decoded text is visible
+  if (cqDecodedText && cqDecodedText.style.display !== 'none') {
+    decodedTextEl = cqDecodedText;
+    txTextEl = cqTxText;
+  } else if (sendDecodedText && sendDecodedText.style.display !== 'none') {
+    decodedTextEl = sendDecodedText;
+    txTextEl = sendTxText;
+  } else {
+    return false; // No active decoded text display
+  }
+
+  // Append the decoded letter to the decoded text display
+  decodedTextEl.textContent += letterUpper;
+
+  // Check if we've completed the expected text
+  const expectedText = Array.from(txTextEl.querySelectorAll('.char')).map(el => el.textContent).join('');
+
+  if (decodedTextEl.textContent.length >= expectedText.length) {
+    // Message complete
+    sendPracticeActive = false;
+    morseInput.clearCustomDecodedLetterHandler();
+    morseInput.setWordSpacing(false); // Disable word spacing
+
+    // Trigger the pending station response
+    if (sendPracticePendingResponse) {
+      sendPracticePendingResponse();
+      sendPracticePendingResponse = null;
+    }
+  }
+
+  return true; // We handled it
+}
+
+/**
  * Handles the "CQ" button click to call stations.
  *
  * - In multi-station modes, calling CQ adds more stations if enabled.
@@ -465,33 +527,74 @@ function cq() {
 
   // Prepare TX text display for CQ
   const cqTxText = document.getElementById('cqTxText');
+  const cqDecodedText = document.getElementById('cqDecodedText');
   prepareTxText(cqTxText, cqMsg);
-  const cqCallback = shouldDisplayTxText() ? createHighlightCallback(cqTxText) : null;
 
-  let yourResponseTimer = yourStation.player.playSentence(
-    cqMsg,
-    audioContext.currentTime + backgroundStaticDelay,
-    cqCallback
-  );
-  updateAudioLock(yourResponseTimer);
+  let yourResponseTimer;
 
-  // Auto-focus response field after CQ is sent
-  if (shouldDisplayTxText()) {
-    const responseField = document.getElementById('responseField');
-    setTimeout(() => {
-      responseField.focus();
-    }, (yourResponseTimer - audioContext.currentTime) * 1000);
+  if (isSendPracticeMode()) {
+    // Send practice mode: Show text but don't play audio
+    sendPracticeActive = true;
+    sendPracticeExpectedText = cqMsg.toUpperCase();
+    sendPracticeCurrentIndex = 0;
+    yourResponseTimer = audioContext.currentTime; // Immediate
+
+    // Clear and show the decoded text display
+    cqDecodedText.textContent = '';
+    cqDecodedText.style.display = 'inline-block';
+
+    // Enable word spacing for send practice mode
+    morseInput.setWordSpacing(true);
+
+    // Set up custom handler for morse input
+    morseInput.setCustomDecodedLetterHandler(handleSendPracticeCharacter);
+  } else {
+    // Hide decoded text in other modes
+    cqDecodedText.style.display = 'none';
+    // Normal modes: Play audio with or without highlighting
+    const cqCallback = shouldDisplayTxText() ? createHighlightCallback(cqTxText) : null;
+
+    yourResponseTimer = yourStation.player.playSentence(
+      cqMsg,
+      audioContext.currentTime + backgroundStaticDelay,
+      cqCallback
+    );
+    updateAudioLock(yourResponseTimer);
+
+    // Auto-focus response field after CQ is sent
+    if (shouldDisplayTxText()) {
+      const responseField = document.getElementById('responseField');
+      setTimeout(() => {
+        responseField.focus();
+      }, (yourResponseTimer - audioContext.currentTime) * 1000);
+    }
   }
 
   if (modeConfig.showTuStep) {
     // Contest-like modes: CQ adds more stations
     addStations(currentStations, inputs);
-    respondWithAllStations(currentStations, yourResponseTimer);
+
+    if (isSendPracticeMode()) {
+      // Store the response to play after user finishes sending
+      sendPracticePendingResponse = () => {
+        respondWithAllStations(currentStations, audioContext.currentTime);
+      };
+    } else {
+      respondWithAllStations(currentStations, yourResponseTimer);
+    }
     lastRespondingStations = currentStations;
   } else {
     // Single mode: Just get one station
     cqButton.disabled = true;
-    nextSingleStation(yourResponseTimer);
+
+    if (isSendPracticeMode()) {
+      // Store the response to play after user finishes sending
+      sendPracticePendingResponse = () => {
+        nextSingleStation(audioContext.currentTime);
+      };
+    } else {
+      nextSingleStation(yourResponseTimer);
+    }
   }
 }
 
@@ -524,15 +627,57 @@ function send() {
 
   // Prepare TX text display for Send
   const sendTxText = document.getElementById('sendTxText');
+  const sendDecodedText = document.getElementById('sendDecodedText');
+  const cqDecodedText = document.getElementById('cqDecodedText');
   prepareTxText(sendTxText, responseFieldText);
-  const sendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
+
+  let yourResponseTimer;
+  let sendCallback = null;
+
+  // Clear any previous send practice state and handler before setting up new state
+  sendPracticeActive = false;
+  morseInput.clearCustomDecodedLetterHandler();
+  morseInput.setWordSpacing(false);
+
+  if (isSendPracticeMode()) {
+    // Send practice mode: Show text but don't play audio yet
+    sendPracticeActive = true;
+    sendPracticeExpectedText = responseFieldText.toUpperCase();
+    sendPracticeCurrentIndex = 0;
+    yourResponseTimer = audioContext.currentTime; // Immediate
+
+    // Hide CQ decoded text and show Send decoded text
+    if (cqDecodedText) {
+      cqDecodedText.style.display = 'none';
+    }
+
+    // Clear and show the decoded text display
+    if (sendDecodedText) {
+      sendDecodedText.textContent = '';
+      sendDecodedText.style.display = 'inline-block';
+    }
+
+    // Enable word spacing for send practice mode
+    morseInput.setWordSpacing(true);
+
+    // Set up custom handler for morse input
+    morseInput.setCustomDecodedLetterHandler(handleSendPracticeCharacter);
+  } else {
+    // Hide decoded text in other modes
+    if (sendDecodedText) {
+      sendDecodedText.style.display = 'none';
+    }
+    sendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
+  }
 
   if (modeConfig.showTuStep) {
     // Multi-station scenario
     if (currentStations.length === 0) return;
 
-    let yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
-    updateAudioLock(yourResponseTimer);
+    if (!isSendPracticeMode()) {
+      yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
+      updateAudioLock(yourResponseTimer);
+    }
 
     // Handling repeats
     if (
@@ -618,31 +763,52 @@ function send() {
         // Update the TX text display to show the full message (callsign + exchange)
         const fullMessage = responseFieldText + yourExchange;
         prepareTxText(sendTxText, fullMessage);
-        const fullSendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
 
-        // Play the exchange part with highlighting starting from where the callsign left off
-        let yourResponseTimer2 = yourStation.player.playSentence(
-          yourExchange,
-          yourResponseTimer,
-          fullSendCallback ? (index, token) => {
-            // Offset the index by the length of the callsign already sent
-            highlightChar(sendTxText, responseFieldText.length + index);
-          } : null
-        );
-        updateAudioLock(yourResponseTimer2);
-        let theirResponseTimer = currentStations[
-          matchIndex
-        ].player.playSentence(theirExchange, yourResponseTimer2 + 0.5);
-        updateAudioLock(theirResponseTimer);
+        let yourResponseTimer2, theirResponseTimer;
+
+        if (isSendPracticeMode()) {
+          // Send practice mode: Update expected text to include exchange
+          sendPracticeExpectedText = fullMessage.toUpperCase();
+          yourResponseTimer2 = audioContext.currentTime;
+
+          // Store the pending response to play after user finishes
+          sendPracticePendingResponse = () => {
+            const theirTime = currentStations[matchIndex].player.playSentence(
+              theirExchange,
+              audioContext.currentTime + 0.5
+            );
+            updateAudioLock(theirTime);
+          };
+        } else {
+          const fullSendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
+
+          // Play the exchange part with highlighting starting from where the callsign left off
+          yourResponseTimer2 = yourStation.player.playSentence(
+            yourExchange,
+            yourResponseTimer,
+            fullSendCallback ? (index, token) => {
+              // Offset the index by the length of the callsign already sent
+              highlightChar(sendTxText, responseFieldText.length + index);
+            } : null
+          );
+          updateAudioLock(yourResponseTimer2);
+          theirResponseTimer = currentStations[
+            matchIndex
+          ].player.playSentence(theirExchange, yourResponseTimer2 + 0.5);
+          updateAudioLock(theirResponseTimer);
+        }
+
         currentStationAttempts++;
 
         // Auto-focus info field after exchange is complete (if in display-tx-text mode)
-        if (shouldDisplayTxText() && modeConfig.requiresInfoField) {
-          setTimeout(() => {
+        if (!isSendPracticeMode()) {
+          if (shouldDisplayTxText() && modeConfig.requiresInfoField) {
+            setTimeout(() => {
+              infoField.focus();
+            }, (theirResponseTimer - audioContext.currentTime) * 1000);
+          } else if (modeConfig.requiresInfoField) {
             infoField.focus();
-          }, (theirResponseTimer - audioContext.currentTime) * 1000);
-        } else if (modeConfig.requiresInfoField) {
-          infoField.focus();
+          }
         }
         readyForTU = true;
         activeStationIndex = matchIndex;

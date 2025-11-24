@@ -942,6 +942,7 @@
           <select id="difficultyLevel" class="form-select">
             <option value="no-text">No Activation Text</option>
             <option value="display-tx-text">Activation Text - Display Only</option>
+            <option value="send-practice">Activation Text - Send Practice</option>
           </select>
         </div>
       </div>
@@ -955,7 +956,14 @@
           <!-- CQ Button with TX Text Display -->
           <div class="w-100 mb-2" id="cqButtonContainer">
             <button id="cqButton" class="btn btn-success me-2">CQ</button>
-            <span id="cqTxText" class="tx-text" style="display: none;"></span>
+            <div style="display: inline-block; vertical-align: top;">
+              <div>
+                <span id="cqTxText" class="tx-text" style="display: none;"></span>
+              </div>
+              <div>
+                <span id="cqDecodedText" class="decoded-text" style="display: none;"></span>
+              </div>
+            </div>
           </div>
 
           <!-- Response Text Box -->
@@ -978,7 +986,14 @@
             <button id="sendButton" class="btn btn-primary me-2">
               Send
             </button>
-            <span id="sendTxText" class="tx-text" style="display: none;"></span>
+            <div style="display: inline-block; vertical-align: top;">
+              <div>
+                <span id="sendTxText" class="tx-text" style="display: none;"></span>
+              </div>
+              <div>
+                <span id="sendDecodedText" class="decoded-text" style="display: none;"></span>
+              </div>
+            </div>
           </div>
 
           <!-- Info Field (State) -->

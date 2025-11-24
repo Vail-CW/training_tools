@@ -58,6 +58,7 @@ export class Decoder {
     this.farnsworth = 3;
     this.wordTimer = null; // Timer for word boundaries
     this.wordTimeout = this.unit * 7; // A typical word gap is 7 units
+    this.enableWordSpacing = false; // Disabled by default for MorseWalker compatibility
   }
 
   keyOn() {
@@ -133,16 +134,20 @@ export class Decoder {
   }
 
   startWordTimer() {
-    // Comment out word spacing for MorseWalker integration
+    // Only enable word spacing if explicitly enabled (for send practice mode)
+    if (!this.enableWordSpacing) return;
+
     // Set up the word timer to add a space after a word boundary
-    /*
-		this.wordTimer = setTimeout(() => {
-			// Update with a space to indicate a word boundary
-			if (this.onLetterDecoded) {
-				this.onLetterDecoded(' ');
-			}
-		}, this.wordTimeout);
-		*/
+    this.wordTimer = setTimeout(() => {
+      // Update with a space to indicate a word boundary
+      if (this.onLetterDecoded) {
+        this.onLetterDecoded(' ');
+      }
+    }, this.wordTimeout);
+  }
+
+  setWordSpacing(enabled) {
+    this.enableWordSpacing = enabled;
   }
 
   calculateWpm() {

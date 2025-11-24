@@ -13,6 +13,7 @@ class MorseInput {
     this.decoder = null;
     this.keyer = null;
     this.initialized = false;
+    this.customDecodedLetterHandler = null; // Custom handler for decoded letters
 
     // Set up keyboard input - but don't initialize audio yet
     window.addEventListener('keydown', (e) => this.handleKeyEvent(e, true));
@@ -68,6 +69,12 @@ class MorseInput {
    * @param {string} letter - The decoded letter
    */
   handleDecodedLetter(letter) {
+    // If there's a custom handler, use it instead
+    if (this.customDecodedLetterHandler) {
+      const handled = this.customDecodedLetterHandler(letter);
+      if (handled) return; // Custom handler took care of it
+    }
+
     const activeField = document.activeElement;
     if (!activeField || !['INPUT', 'TEXTAREA'].includes(activeField.tagName)) {
       return;
@@ -90,6 +97,21 @@ class MorseInput {
   }
 
   /**
+   * Sets a custom handler for decoded letters
+   * @param {function} handler - Function that receives the decoded letter and returns true if handled
+   */
+  setCustomDecodedLetterHandler(handler) {
+    this.customDecodedLetterHandler = handler;
+  }
+
+  /**
+   * Clears the custom handler
+   */
+  clearCustomDecodedLetterHandler() {
+    this.customDecodedLetterHandler = null;
+  }
+
+  /**
    * Updates settings when MorseWalker configuration changes
    * @param {Object} settings - New settings object
    */
@@ -108,6 +130,15 @@ class MorseInput {
     if (settings.mode !== undefined) {
       this.keyer.setMode(settings.mode);
     }
+  }
+
+  /**
+   * Enables or disables word spacing in the decoder
+   * @param {boolean} enabled - True to enable word spacing
+   */
+  setWordSpacing(enabled) {
+    if (!this.initialized) return;
+    this.decoder.setWordSpacing(enabled);
   }
 }
 

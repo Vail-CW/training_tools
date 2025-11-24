@@ -19,7 +19,16 @@ export function getDifficultyLevel() {
  * @returns {boolean} True if TX text should be displayed
  */
 export function shouldDisplayTxText() {
-  return getDifficultyLevel() === 'display-tx-text';
+  const level = getDifficultyLevel();
+  return level === 'display-tx-text' || level === 'send-practice';
+}
+
+/**
+ * Checks if we're in send practice mode
+ * @returns {boolean} True if in send practice mode
+ */
+export function isSendPracticeMode() {
+  return getDifficultyLevel() === 'send-practice';
 }
 
 /**
@@ -112,4 +121,58 @@ export function createHighlightCallback(displayElement) {
   return (index, token) => {
     highlightChar(displayElement, index);
   };
+}
+
+/**
+ * Marks a character as correct (green)
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @param {number} index - The index of the character
+ */
+export function markCharCorrect(displayElement, index) {
+  const chars = displayElement.querySelectorAll('.char');
+  if (index >= 0 && index < chars.length) {
+    chars[index].classList.remove('incorrect');
+    chars[index].classList.add('correct');
+  }
+}
+
+/**
+ * Marks a character as incorrect (red)
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @param {number} index - The index of the character
+ */
+export function markCharIncorrect(displayElement, index) {
+  const chars = displayElement.querySelectorAll('.char');
+  if (index >= 0 && index < chars.length) {
+    chars[index].classList.remove('correct');
+    chars[index].classList.add('incorrect');
+  }
+}
+
+/**
+ * Gets the expected text from a display element
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @returns {string} The expected text
+ */
+export function getExpectedText(displayElement) {
+  const chars = displayElement.querySelectorAll('.char');
+  return Array.from(chars).map(char => char.textContent).join('');
+}
+
+/**
+ * Gets the current progress index (number of correct characters entered)
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @returns {number} The index of the next expected character
+ */
+export function getCurrentProgressIndex(displayElement) {
+  const chars = displayElement.querySelectorAll('.char');
+  let index = 0;
+  for (const char of chars) {
+    if (char.classList.contains('correct')) {
+      index++;
+    } else {
+      break;
+    }
+  }
+  return index;
 }

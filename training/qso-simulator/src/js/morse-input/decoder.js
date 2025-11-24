@@ -41,9 +41,13 @@ const morseToAlphabet = new Map([
   ['112211', '?'],
   ['212122', '!'],
   ['211112', '-'],
-  ['21221', '('],
   ['212212', ')'],
   ['222111', ':'],
+  // Prosigns (some have same patterns as punctuation)
+  ['211121', '<BK>'],  // Break
+  ['12121', '<AR>'],   // End of message
+  ['111212', '<SK>'],  // End of transmission
+  ['21221', '<KN>'],   // Go ahead specific station (same as '(')
 ]);
 
 export class Decoder {

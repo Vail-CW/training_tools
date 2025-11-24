@@ -1,0 +1,2 @@
+# SPA redirect for QSO Simulator
+/qso-simulator/* /qso-simulator/index.html 200

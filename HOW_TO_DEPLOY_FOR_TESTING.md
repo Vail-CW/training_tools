@@ -2,6 +2,17 @@
 
 This guide explains how to deploy feature branches to the public test site hosted on GitHub Pages, and how to merge tested features back to main without bringing over the deployment artifacts.
 
+## ⚠️ CRITICAL: NEVER MERGE TEST BRANCH TO MAIN ⚠️
+
+**IMPORTANT WORKFLOW RULE:**
+1. **Develop on your feature branch** (e.g., `my-feature`, `QSO-Difficulty-Levels`)
+2. **Merge your feature branch to `test`** for public testing
+3. **After testing passes, merge your FEATURE BRANCH to `main`** (NOT the test branch!)
+
+**NEVER run:** `git checkout main && git merge test`
+
+The `test` branch contains GitHub Pages deployment files (`docs/` folder, no root `index.html`) that should NEVER be merged to `main`. Always merge your original feature branch to main, not the test branch.
+
 ## Overview
 
 - **Test Branch:** `test` - Deployed to GitHub Pages at https://vail-cw.github.io/training_tools/
@@ -41,7 +52,7 @@ cd ../..
 
 ### Step 3: Update the Deployment Package
 
-The `docs/` folder is what GitHub Pages serves. Update it with the latest changes:
+The `docs/` folder is what GitHub Pages serves from `/docs`. Update it with the latest changes:
 
 ```bash
 # Remove old docs folder
@@ -49,6 +60,11 @@ rm -rf docs
 
 # Copy netlify-deploy contents to docs
 cp -r netlify-deploy/. docs/
+
+# CRITICAL: Ensure there is NO index.html in the root directory
+# GitHub Pages is configured to serve from /docs, not from root
+# A root index.html will cause redirect issues
+rm -f index.html
 
 # If you rebuilt QSO Simulator, update it in docs as well
 # (The build process should have already updated netlify-deploy/qso-simulator)
@@ -78,7 +94,7 @@ The site should be live in 1-2 minutes at: https://vail-cw.github.io/training_to
 
 ## Merging Tested Features Back to Main
 
-Once your feature has been tested on the public test site, you can merge it back to `main` **without** bringing over the GitHub Pages deployment files.
+⚠️ **CRITICAL:** Once your feature has been tested on the public test site, merge your **ORIGINAL FEATURE BRANCH** to `main`, NOT the `test` branch. The test branch contains GitHub Pages deployment files that should never go to main.
 
 ### Step 1: Checkout Main Branch
 
@@ -87,55 +103,57 @@ git checkout main
 git pull origin main
 ```
 
-### Step 2: Merge Using Specific Paths (Excluding docs/)
+### Step 2: Merge Your Feature Branch (NOT test!)
 
-**Option A: Merge specific files/folders (Recommended)**
-
-If your changes are contained in specific directories:
+**CORRECT METHOD - Merge your feature branch:**
 
 ```bash
-# Merge only the directories you changed
-# Example: If you only changed QSO Simulator
-git checkout test -- training/qso-simulator/src
-git checkout test -- training/qso-simulator/package.json
+# Checkout main
+git checkout main
 
-# Or if you changed main training tools
-git checkout test -- training/scripts
-git checkout test -- training/index.html
-git checkout test -- training/training.css
+# Merge your ORIGINAL feature branch (the one you developed on)
+git merge your-feature-branch
 
-# Commit the changes
-git commit -m "Merge [feature-name] from test branch"
+# Example: If you were working on QSO-Difficulty-Levels
+git merge QSO-Difficulty-Levels
+
+# Commit if needed (if there are conflicts to resolve)
+git commit -m "Merge your-feature-branch to main after successful testing"
 ```
 
-**Option B: Merge everything, then remove docs/ (Alternative)**
+**WRONG METHOD - DO NOT DO THIS:**
 
 ```bash
-# Merge the test branch
-git merge test --no-commit
-
-# Remove the docs folder before committing
-git reset HEAD docs/
-git checkout -- docs/
-
-# Or if docs doesn't exist on main, just remove it
-rm -rf docs
-git add -u docs
-
-# Now commit the merge
-git commit -m "Merge [feature-name] from test branch (excluding docs/)"
+# ❌ NEVER DO THIS:
+git checkout main
+git merge test  # This will bring over docs/ folder and other test-only files!
 ```
 
-**Option C: Cherry-pick specific commits (Most precise)**
+### Alternative: If You Must Pull From Test Branch
+
+If you accidentally made commits directly on the `test` branch (not recommended), use one of these methods:
+
+**Option A: Cherry-pick specific commits (Safest)**
 
 ```bash
-# Find the commit hashes from test branch that you want
+# Find the specific commits you want from test (exclude docs/ updates)
 git log test --oneline
 
-# Cherry-pick specific commits
+# Cherry-pick only your feature commits
 git cherry-pick <commit-hash-1>
 git cherry-pick <commit-hash-2>
 # etc.
+```
+
+**Option B: Merge specific files only**
+
+```bash
+# Checkout specific files from test
+git checkout test -- training/qso-simulator/src
+git checkout test -- training/scripts/some-file.js
+
+# Commit the changes
+git commit -m "Merge [feature-name] from test branch (files only)"
 ```
 
 ### Step 3: Update netlify-deploy for Production
@@ -208,11 +226,26 @@ Vail Training Tools/
 
 ## Important Notes
 
+### ⚠️ Critical Branch Management Rules
+
+**DO:**
+- ✅ Develop on feature branches (e.g., `my-feature`, `QSO-Difficulty-Levels`)
+- ✅ Merge feature branch → `test` for testing
+- ✅ After testing, merge feature branch → `main` for production
+- ✅ Keep feature branches until they're merged to main
+
+**DON'T:**
+- ❌ **NEVER** merge `test` → `main` (will bring GitHub Pages files)
+- ❌ Don't make commits directly on `test` branch (use feature branches)
+- ❌ Don't delete feature branches until merged to main
+- ❌ Don't create a root `index.html` on test branch (GitHub Pages serves from `/docs`)
+
 ### About the `docs/` Folder
 
 - **Only exists on the `test` branch** - Do NOT merge to `main`
 - Contains the same structure as `netlify-deploy` but used for GitHub Pages
 - GitHub Pages is configured to serve from `/docs` folder on the `test` branch
+- **Must NOT have a root `index.html`** - GitHub Pages serves directly from `/docs`
 
 ### About `netlify-deploy/` Folder
 
@@ -235,31 +268,45 @@ After building, copy `dist/` contents to deployment folders:
 
 ## Common Workflows
 
-### Workflow 1: Test a Feature, Then Deploy to Production
+### Workflow 1: Test a Feature, Then Deploy to Production (CORRECT METHOD)
 
 ```bash
 # 1. Develop on feature branch
 git checkout -b my-new-feature
-# ... make changes ...
+# ... make changes to training/ files ...
 git add .
 git commit -m "Add my new feature"
 git push origin my-new-feature
 
-# 2. Merge to test for public testing
+# 2. Merge feature branch to test for public testing
 git checkout test
+git pull origin test
 git merge my-new-feature
-# Update docs/ folder as described above
-git push origin test
-# Test at https://vail-cw.github.io/training_tools/
 
-# 3. After testing, merge to main (without docs/)
+# 3. Update docs/ folder for GitHub Pages
+rm -rf docs
+cp -r netlify-deploy/. docs/
+rm -f index.html  # CRITICAL: Remove root index if it exists
+git add .
+git commit -m "Deploy my-new-feature to test for public testing"
+git push origin test
+
+# 4. Test at https://vail-cw.github.io/training_tools/
+# ... verify feature works correctly ...
+
+# 5. After testing passes, merge FEATURE BRANCH to main (NOT test!)
 git checkout main
-git checkout test -- training/scripts/my-changed-files.js
-git commit -m "Merge my-new-feature from test"
-# Update netlify-deploy/ as described above
+git pull origin main
+git merge my-new-feature  # ✅ Merge feature branch, NOT test branch!
 git push origin main
 
-# 4. Deploy to Netlify
+# 6. Update netlify-deploy/ for production
+# ... update netlify-deploy as described in Step 3 ...
+git add netlify-deploy/
+git commit -m "Update netlify-deploy with my-new-feature"
+git push origin main
+
+# 7. Deploy to Netlify
 netlify deploy --prod --dir=netlify-deploy
 ```
 
@@ -286,6 +333,22 @@ git push origin test
 
 ## Troubleshooting
 
+### GitHub Pages Shows Wrong Content or Redirects to /training/
+
+**Problem:** The site redirects to `/training/qso-simulator/` instead of `/qso-simulator/`
+
+**Solution:** There's a root `index.html` file causing redirects. Remove it:
+
+```bash
+git checkout test
+rm -f index.html
+git add index.html
+git commit -m "Remove root index.html - GitHub Pages serves from /docs"
+git push origin test
+```
+
+**Explanation:** GitHub Pages is configured to serve from the `/docs` folder. A root `index.html` will redirect users to the wrong path.
+
 ### GitHub Pages Not Updating
 
 Check the build status:
@@ -303,15 +366,25 @@ git push origin test
 
 Make sure you:
 1. Ran `npm run build` in `training/qso-simulator/`
-2. Copied the `dist/` folder to the deployment location
+2. Copied the `dist/` folder to `docs/qso-simulator/`
 3. Committed and pushed the built files
+4. No root `index.html` exists (it should be deleted)
 
-### Merge Conflicts Between test and main
+### Accidentally Merged test to main
 
-If you get conflicts when merging:
-1. Resolve conflicts in your feature files
-2. **Always** choose to keep `main` version for `docs/` folder (or exclude it entirely)
-3. Complete the merge commit
+If you accidentally ran `git merge test` on main:
+
+```bash
+# Undo the merge (if not pushed yet)
+git reset --hard HEAD~1
+
+# If already pushed, you'll need to revert
+git revert -m 1 HEAD
+git push origin main
+
+# Then merge the correct feature branch
+git merge your-feature-branch
+```
 
 ## GitHub Pages Configuration
 

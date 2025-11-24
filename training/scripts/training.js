@@ -927,23 +927,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// Route to Send Practice
 		console.log('Decoded character:', char);
-		sentChars += char;
-		if (sentOutput) {
-			sentOutput.value = sentChars;
-		}
 
-		// Flash the send lamp
-		const sendLamp = document.querySelector('.send-lamp');
-		if (sendLamp) {
-			sendLamp.classList.add('active');
-			setTimeout(() => {
-				sendLamp.classList.remove('active');
-			}, 200);
+		// Strip out spaces - we only care about the actual characters sent
+		if (char !== ' ') {
+			sentChars += char;
+			if (sentOutput) {
+				sentOutput.value = sentChars;
+			}
+
+			// Flash the send lamp
+			const sendLamp = document.querySelector('.send-lamp');
+			if (sendLamp) {
+				sendLamp.classList.add('active');
+				setTimeout(() => {
+					sendLamp.classList.remove('active');
+				}, 200);
+			}
 		}
 
 		// Check if sent characters match target
 		const targetUpper = targetChar.toUpperCase();
-		const sentUpper = sentChars.toUpperCase();
+		const sentUpper = sentChars.toUpperCase(); // No need to trim since we ignore spaces
 
 		if (sentUpper === targetUpper) {
 			// Correct! Clear sent field and generate new target
@@ -952,15 +956,36 @@ document.addEventListener('DOMContentLoaded', () => {
 			sendStats.correct++;
 			updateSendStats();
 
-			sentChars = '';
-			if (sentOutput) {
-				sentOutput.value = '';
+			// Show big green "CORRECT!" message
+			const targetDisplay = document.getElementById('target-character');
+			if (targetDisplay) {
+				const originalContent = targetDisplay.innerHTML;
+				targetDisplay.innerHTML = '<span style="color: #48c774; font-size: 4rem; font-weight: bold;">✓ CORRECT!</span>';
+				targetDisplay.style.backgroundColor = 'rgba(72, 199, 116, 0.1)';
+
+				// Clear sent field
+				sentChars = '';
+				if (sentOutput) {
+					sentOutput.value = '';
+				}
+
+				// Reset and show new target after delay
+				setTimeout(() => {
+					targetDisplay.style.backgroundColor = '';
+					generateNewTarget();
+				}, 1000);
+			} else {
+				// Fallback if display not found
+				sentChars = '';
+				if (sentOutput) {
+					sentOutput.value = '';
+				}
+				setTimeout(() => {
+					generateNewTarget();
+				}, 500);
 			}
-			setTimeout(() => {
-				generateNewTarget();
-			}, 500);
-		} else if (sentChars.length >= targetChar.length) {
-			// Wrong - sent enough characters but doesn't match
+		} else if (sentUpper.length >= targetChar.length) {
+			// Wrong - sent enough characters but doesn't match (use trimmed length)
 			console.log('Wrong! Sent:', sentUpper, 'Target:', targetUpper);
 			sendStats.attempts++;
 			updateSendStats();

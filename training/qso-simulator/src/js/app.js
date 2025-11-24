@@ -634,39 +634,8 @@ function send() {
   let yourResponseTimer;
   let sendCallback = null;
 
-  // Clear any previous send practice state and handler before setting up new state
-  sendPracticeActive = false;
-  morseInput.clearCustomDecodedLetterHandler();
-  morseInput.setWordSpacing(false);
-
-  if (isSendPracticeMode()) {
-    // Send practice mode: Show text but don't play audio yet
-    sendPracticeActive = true;
-    sendPracticeExpectedText = responseFieldText.toUpperCase();
-    sendPracticeCurrentIndex = 0;
-    yourResponseTimer = audioContext.currentTime; // Immediate
-
-    // Hide CQ decoded text and show Send decoded text
-    if (cqDecodedText) {
-      cqDecodedText.style.display = 'none';
-    }
-
-    // Clear and show the decoded text display
-    if (sendDecodedText) {
-      sendDecodedText.textContent = '';
-      sendDecodedText.style.display = 'inline-block';
-    }
-
-    // Enable word spacing for send practice mode
-    morseInput.setWordSpacing(true);
-
-    // Set up custom handler for morse input
-    morseInput.setCustomDecodedLetterHandler(handleSendPracticeCharacter);
-  } else {
-    // Hide decoded text in other modes
-    if (sendDecodedText) {
-      sendDecodedText.style.display = 'none';
-    }
+  // In send practice mode, don't set up the handler yet - wait until callsign is validated
+  if (!isSendPracticeMode()) {
     sendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
   }
 
@@ -770,6 +739,22 @@ function send() {
           // Send practice mode: Update expected text to include exchange
           sendPracticeExpectedText = fullMessage.toUpperCase();
           yourResponseTimer2 = audioContext.currentTime;
+
+          // NOW activate send practice mode (after callsign was validated)
+          sendPracticeActive = true;
+
+          // Clear CQ decoded text and show Send decoded text
+          if (cqDecodedText) {
+            cqDecodedText.style.display = 'none';
+          }
+          if (sendDecodedText) {
+            sendDecodedText.textContent = '';
+            sendDecodedText.style.display = 'inline-block';
+          }
+
+          // Enable word spacing and set up custom handler
+          morseInput.setWordSpacing(true);
+          morseInput.setCustomDecodedLetterHandler(handleSendPracticeCharacter);
 
           // Store the pending response to play after user finishes
           sendPracticePendingResponse = () => {

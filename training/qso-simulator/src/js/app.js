@@ -453,11 +453,13 @@ function handleSendPracticeCharacter(letter) {
 
   const letterUpper = letter.toUpperCase();
 
-  // Determine which decoded text element to use (CQ or Send)
+  // Determine which decoded text element to use (CQ, Send, or TU)
   const cqDecodedText = document.getElementById('cqDecodedText');
   const sendDecodedText = document.getElementById('sendDecodedText');
+  const tuDecodedText = document.getElementById('tuDecodedText');
   const cqTxText = document.getElementById('cqTxText');
   const sendTxText = document.getElementById('sendTxText');
+  const tuTxText = document.getElementById('tuTxText');
 
   let decodedTextEl, txTextEl;
 
@@ -468,6 +470,9 @@ function handleSendPracticeCharacter(letter) {
   } else if (sendDecodedText && sendDecodedText.style.display !== 'none') {
     decodedTextEl = sendDecodedText;
     txTextEl = sendTxText;
+  } else if (tuDecodedText && tuDecodedText.style.display !== 'none') {
+    decodedTextEl = tuDecodedText;
+    txTextEl = tuTxText;
   } else {
     return false; // No active decoded text display
   }
@@ -743,9 +748,16 @@ function send() {
         let yourResponseTimer2, theirResponseTimer;
 
         if (isSendPracticeMode()) {
-          // Send practice mode: Update expected text to include exchange
+          // Send practice mode: Play "R R" acknowledgment first
+          const rrResponseTimer = currentStations[matchIndex].player.playSentence(
+            'R R',
+            yourResponseTimer + 0.25
+          );
+          updateAudioLock(rrResponseTimer);
+
+          // Update expected text to include exchange
           sendPracticeExpectedText = fullMessage.toUpperCase();
-          yourResponseTimer2 = audioContext.currentTime;
+          yourResponseTimer2 = rrResponseTimer + 0.25;
 
           // NOW activate send practice mode (after callsign was validated)
           sendPracticeActive = true;
@@ -1010,34 +1022,128 @@ function tu() {
 
   // Prepare TX text display for TU
   const tuTxText = document.getElementById('tuTxText');
+  const tuDecodedText = document.getElementById('tuDecodedText');
   prepareTxText(tuTxText, yourSignoffMessage);
-  const tuCallback = shouldDisplayTxText() ? createHighlightCallback(tuTxText) : null;
 
-  let yourResponseTimer = yourStation.player.playSentence(
-    yourSignoffMessage,
-    audioContext.currentTime + 0.5,
-    tuCallback
-  );
-  updateAudioLock(yourResponseTimer);
+  let yourResponseTimer;
+  let responseTimerToUse;
 
-  let responseTimerToUse = yourResponseTimer; // fallback timer
+  if (isSendPracticeMode()) {
+    // Send practice mode: Don't play audio, wait for user to key in the signoff
+    sendPracticeExpectedText = yourSignoffMessage.toUpperCase();
+    sendPracticeActive = true;
 
-  if (typeof modeConfig.theirSignoff === 'function') {
-    // Call theirSignoff only if it returns a non-empty string
-    let theirSignoffMessage = modeConfig.theirSignoff(
-      yourStation,
-      currentStation,
-      null
-    );
-    let theirResponseTimer = currentStation.player.playSentence(
-      theirSignoffMessage,
-      yourResponseTimer + 0.5
-    );
-    updateAudioLock(theirResponseTimer);
-    responseTimerToUse = theirResponseTimer;
+    // Hide previous decoded text elements and show TU decoded text
+    const cqDecodedText = document.getElementById('cqDecodedText');
+    const sendDecodedText = document.getElementById('sendDecodedText');
+
+    if (cqDecodedText) {
+      cqDecodedText.style.display = 'none';
+    }
+    if (sendDecodedText) {
+      sendDecodedText.style.display = 'none';
+    }
+    if (tuDecodedText) {
+      tuDecodedText.textContent = '';
+      tuDecodedText.style.display = 'inline-block';
+    }
+
+    // Enable word spacing and set up custom handler
+    morseInput.setWordSpacing(true);
+    morseInput.setCustomDecodedLetterHandler(handleSendPracticeCharacter);
+
+    // Store the pending response to play after user finishes
+    // In send practice mode, complete the QSO after user finishes keying
+    sendPracticePendingResponse = () => {
+      let theirTime = audioContext.currentTime;
+
+      if (typeof modeConfig.theirSignoff === 'function') {
+        let theirSignoffMessage = modeConfig.theirSignoff(
+          yourStation,
+          currentStation,
+          null
+        );
+        if (theirSignoffMessage) {
+          theirTime = currentStation.player.playSentence(
+            theirSignoffMessage,
+            audioContext.currentTime + 0.5
+          );
+          updateAudioLock(theirTime);
+        }
+      }
+
+      // Complete the QSO after the response plays
+      const wpmString =
+        `${currentStation.wpm}` +
+        (currentStation.enableFarnsworth
+          ? ` / ${currentStation.farnsworthSpeed}`
+          : '');
+
+      // Add the QSO result to the table
+      addTableRow(
+        'resultsTable',
+        totalContacts,
+        currentStation.callsign,
+        wpmString,
+        currentStationAttempts,
+        audioContext.currentTime - currentStationStartTime,
+        extraInfo
+      );
+
+      // Remove the worked station
+      currentStations.splice(activeStationIndex, 1);
+      activeStationIndex = null;
+      currentStationAttempts = 0;
+      readyForTU = false;
+      updateActiveStations(currentStations.length);
+
+      const responseField = document.getElementById('responseField');
+      responseField.value = '';
+      infoField.value = '';
+      infoField2.value = '';
+      responseField.focus();
+
+      // Chance of a new station joining
+      if (Math.random() < 0.4) {
+        addStations(currentStations, inputs);
+      }
+
+      respondWithAllStations(currentStations, theirTime);
+      lastRespondingStations = currentStations;
+      currentStationStartTime = audioContext.currentTime;
+    };
+
+    // In send practice mode, don't complete the QSO yet - return early
+    return;
   } else {
-    // No theirSignoff defined or it's null.
-    // The QSO ends here after yourSignoff.
+    // Normal mode: Play audio with highlighting
+    const tuCallback = shouldDisplayTxText() ? createHighlightCallback(tuTxText) : null;
+
+    yourResponseTimer = yourStation.player.playSentence(
+      yourSignoffMessage,
+      audioContext.currentTime + 0.5,
+      tuCallback
+    );
+    updateAudioLock(yourResponseTimer);
+
+    responseTimerToUse = yourResponseTimer;
+
+    if (typeof modeConfig.theirSignoff === 'function') {
+      // Call theirSignoff only if it returns a non-empty string
+      let theirSignoffMessage = modeConfig.theirSignoff(
+        yourStation,
+        currentStation,
+        null
+      );
+      if (theirSignoffMessage) {
+        let theirResponseTimer = currentStation.player.playSentence(
+          theirSignoffMessage,
+          yourResponseTimer + 0.5
+        );
+        updateAudioLock(theirResponseTimer);
+        responseTimerToUse = theirResponseTimer;
+      }
+    }
   }
 
   const wpmString =

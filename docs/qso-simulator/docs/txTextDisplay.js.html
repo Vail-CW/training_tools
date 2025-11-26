@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: txTextDisplay.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: txTextDisplay.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * TX Text Display Module
+ *
+ * Handles displaying transmitted text with character-by-character highlighting
+ * as morse code is played.
+ */
+
+/**
+ * Gets the difficulty level setting
+ * @returns {string} The current difficulty level ('no-text' or 'display-tx-text')
+ */
+export function getDifficultyLevel() {
+  const difficultySelect = document.getElementById('difficultyLevel');
+  return difficultySelect ? difficultySelect.value : 'no-text';
+}
+
+/**
+ * Checks if TX text should be displayed
+ * @returns {boolean} True if TX text should be displayed
+ */
+export function shouldDisplayTxText() {
+  const level = getDifficultyLevel();
+  return level === 'display-tx-text' || level === 'send-practice';
+}
+
+/**
+ * Checks if we're in send practice mode
+ * @returns {boolean} True if in send practice mode
+ */
+export function isSendPracticeMode() {
+  return getDifficultyLevel() === 'send-practice';
+}
+
+/**
+ * Tokenizes text into display units (characters and prosigns)
+ * @param {string} text - The text to tokenize
+ * @returns {string[]} Array of tokens
+ */
+function tokenizeForDisplay(text) {
+  const tokens = [];
+  let i = 0;
+  while (i &lt; text.length) {
+    if (text[i] === '&lt;') {
+      // Start of a prosign
+      const endIndex = text.indexOf('>', i);
+      if (endIndex !== -1) {
+        tokens.push(text.substring(i, endIndex + 1));
+        i = endIndex + 1;
+      } else {
+        // No closing '>', treat '&lt;' as a normal character
+        tokens.push(text[i]);
+        i++;
+      }
+    } else if (text[i] === ' ') {
+      tokens.push(' ');
+      i++;
+    } else {
+      tokens.push(text[i]);
+      i++;
+    }
+  }
+  return tokens;
+}
+
+/**
+ * Prepares a TX text display element with the given text
+ * @param {HTMLElement} displayElement - The element to display the text in
+ * @param {string} text - The text to display
+ */
+export function prepareTxText(displayElement, text) {
+  if (!shouldDisplayTxText()) {
+    displayElement.style.display = 'none';
+    displayElement.innerHTML = '';
+    return;
+  }
+
+  // Clear previous content
+  displayElement.innerHTML = '';
+  displayElement.style.display = 'inline-block';
+
+  // Tokenize to handle prosigns correctly
+  const tokens = tokenizeForDisplay(text);
+  tokens.forEach((token, index) => {
+    const span = document.createElement('span');
+    span.className = 'char';
+    span.textContent = token;
+    span.dataset.index = index;
+    displayElement.appendChild(span);
+  });
+}
+
+/**
+ * Highlights a character at the given index
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @param {number} index - The index of the character to highlight
+ */
+export function highlightChar(displayElement, index) {
+  if (!shouldDisplayTxText()) return;
+
+  const chars = displayElement.querySelectorAll('.char');
+  if (index >= 0 &amp;&amp; index &lt; chars.length) {
+    chars[index].classList.add('active');
+  }
+}
+
+/**
+ * Clears all highlights from a TX text display
+ * @param {HTMLElement} displayElement - The element to clear
+ */
+export function clearHighlights(displayElement) {
+  const chars = displayElement.querySelectorAll('.char.active');
+  chars.forEach(char => char.classList.remove('active'));
+}
+
+/**
+ * Creates a callback function for highlighting characters during playback
+ * @param {HTMLElement} displayElement - The element to update
+ * @returns {function} Callback function for use with playSentence
+ */
+export function createHighlightCallback(displayElement) {
+  return (index, token) => {
+    highlightChar(displayElement, index);
+  };
+}
+
+/**
+ * Marks a character as correct (green)
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @param {number} index - The index of the character
+ */
+export function markCharCorrect(displayElement, index) {
+  const chars = displayElement.querySelectorAll('.char');
+  if (index >= 0 &amp;&amp; index &lt; chars.length) {
+    chars[index].classList.remove('incorrect');
+    chars[index].classList.add('correct');
+  }
+}
+
+/**
+ * Marks a character as incorrect (red)
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @param {number} index - The index of the character
+ */
+export function markCharIncorrect(displayElement, index) {
+  const chars = displayElement.querySelectorAll('.char');
+  if (index >= 0 &amp;&amp; index &lt; chars.length) {
+    chars[index].classList.remove('correct');
+    chars[index].classList.add('incorrect');
+  }
+}
+
+/**
+ * Gets the expected text from a display element
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @returns {string} The expected text
+ */
+export function getExpectedText(displayElement) {
+  const chars = displayElement.querySelectorAll('.char');
+  return Array.from(chars).map(char => char.textContent).join('');
+}
+
+/**
+ * Gets the current progress index (number of correct characters entered)
+ * @param {HTMLElement} displayElement - The element containing the text
+ * @returns {number} The index of the next expected character
+ */
+export function getCurrentProgressIndex(displayElement) {
+  const chars = displayElement.querySelectorAll('.char');
+  let index = 0;
+  for (const char of chars) {
+    if (char.classList.contains('correct')) {
+      index++;
+    } else {
+      break;
+    }
+  }
+  return index;
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MorseInput.html">MorseInput</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addStations">addStations</a></li><li><a href="global.html#addTableRow">addTableRow</a></li><li><a href="global.html#applyModeSettings">applyModeSettings</a></li><li><a href="global.html#changeMode">changeMode</a></li><li><a href="global.html#clearAllInvalidStates">clearAllInvalidStates</a></li><li><a href="global.html#clearFieldInvalid">clearFieldInvalid</a></li><li><a href="global.html#clearHighlights">clearHighlights</a></li><li><a href="global.html#clearTable">clearTable</a></li><li><a href="global.html#compareExtraInfo">compareExtraInfo</a></li><li><a href="global.html#compareStrings">compareStrings</a></li><li><a href="global.html#cq">cq</a></li><li><a href="global.html#createBackgroundStatic">createBackgroundStatic</a></li><li><a href="global.html#createHighlightCallback">createHighlightCallback</a></li><li><a href="global.html#createMorsePlayer">createMorsePlayer</a></li><li><a href="global.html#currentMode">currentMode</a></li><li><a href="global.html#generateRandomLetters">generateRandomLetters</a></li><li><a href="global.html#getAudioLock">getAudioLock</a></li><li><a href="global.html#getCallingStation">getCallingStation</a></li><li><a href="global.html#getCurrentProgressIndex">getCurrentProgressIndex</a></li><li><a href="global.html#getDOMInputs">getDOMInputs</a></li><li><a href="global.html#getDifficultyLevel">getDifficultyLevel</a></li><li><a href="global.html#getExpectedText">getExpectedText</a></li><li><a href="global.html#getInputs">getInputs</a></li><li><a href="global.html#getModeConfig">getModeConfig</a></li><li><a href="global.html#getRandomNonUSCallsign">getRandomNonUSCallsign</a></li><li><a href="global.html#getRandomUSCallsign">getRandomUSCallsign</a></li><li><a href="global.html#getSelectedCutNumbers">getSelectedCutNumbers</a></li><li><a href="global.html#getSelectedFormats">getSelectedFormats</a></li><li><a href="global.html#getYourStation">getYourStation</a></li><li><a href="global.html#handleSendPracticeCharacter">handleSendPracticeCharacter</a></li><li><a href="global.html#highlightChar">highlightChar</a></li><li><a href="global.html#isBackgroundStaticPlaying">isBackgroundStaticPlaying</a></li><li><a href="global.html#isSendPracticeMode">isSendPracticeMode</a></li><li><a href="global.html#markCharCorrect">markCharCorrect</a></li><li><a href="global.html#markCharIncorrect">markCharIncorrect</a></li><li><a href="global.html#markFieldInvalid">markFieldInvalid</a></li><li><a href="global.html#modeLogicConfig">modeLogicConfig</a></li><li><a href="global.html#modeUIConfig">modeUIConfig</a></li><li><a href="global.html#nextSingleStation">nextSingleStation</a></li><li><a href="global.html#normalizeStationGain">normalizeStationGain</a></li><li><a href="global.html#openAccordionSection">openAccordionSection</a></li><li><a href="global.html#prepareTxText">prepareTxText</a></li><li><a href="global.html#printStation">printStation</a></li><li><a href="global.html#randomDigit">randomDigit</a></li><li><a href="global.html#randomElement">randomElement</a></li><li><a href="global.html#reset">reset</a></li><li><a href="global.html#resetGameState">resetGameState</a></li><li><a href="global.html#respondWithAllStations">respondWithAllStations</a></li><li><a href="global.html#send">send</a></li><li><a href="global.html#shouldDisplayTxText">shouldDisplayTxText</a></li><li><a href="global.html#stop">stop</a></li><li><a href="global.html#stopAllAudio">stopAllAudio</a></li><li><a href="global.html#stopBackgroundStatic">stopBackgroundStatic</a></li><li><a href="global.html#tokenizeForDisplay">tokenizeForDisplay</a></li><li><a href="global.html#tu">tu</a></li><li><a href="global.html#updateActiveStations">updateActiveStations</a></li><li><a href="global.html#updateAudioLock">updateAudioLock</a></li><li><a href="global.html#updateStaticIntensity">updateStaticIntensity</a></li><li><a href="global.html#updateSummaryRow">updateSummaryRow</a></li><li><a href="global.html#validateInputs">validateInputs</a></li><li><a href="global.html#weightedRandom">weightedRandom</a></li><li><a href="global.html#weightedRandomElement">weightedRandomElement</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Wed Nov 26 2025 12:13:46 GMT-0500 (Eastern Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

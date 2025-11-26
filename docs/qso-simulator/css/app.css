@@ -129,3 +129,32 @@ input[type='text']::placeholder {
   text-transform: none; /* Reset the text-transform */
 }
 
+/* TX Text Display Styles */
+.tx-text {
+  font-family: monospace;
+  font-size: 1.1em;
+  letter-spacing: 0.1em;
+  display: inline-block;
+  margin-left: 0.5em;
+}
+
+.tx-text .char {
+  color: white;
+  transition: color 0.1s;
+}
+
+.tx-text .char.active {
+  color: #00ff00;
+}
+
+/* Decoded Text Display Styles */
+.decoded-text {
+  font-family: monospace;
+  font-size: 1.1em;
+  letter-spacing: 0.1em;
+  display: inline-block;
+  margin-left: 0.5em;
+  color: #00ff00;
+  margin-top: 0.25em;
+}
+

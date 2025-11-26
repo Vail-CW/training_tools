@@ -61,6 +61,18 @@ import { getYourStation, getCallingStation } from './stationGenerator.js';
 import { updateStaticIntensity } from './audio.js';
 import { modeLogicConfig, modeUIConfig } from './modes.js';
 import { morseInput } from './morse-input/morse-input.js'; // Import morse input functionality
+import {
+  shouldDisplayTxText,
+  isSendPracticeMode,
+  prepareTxText,
+  createHighlightCallback,
+  clearHighlights,
+  highlightChar,
+  markCharCorrect,
+  markCharIncorrect,
+  getExpectedText,
+  getCurrentProgressIndex
+} from './txTextDisplay.js';
 
 /**
  * Application state variables.
@@ -90,6 +102,12 @@ let totalContacts = 0;
 let yourStation = null;
 let lastRespondingStations = null;
 const farnsworthLowerBy = 6;
+
+// Send practice mode state
+let sendPracticeActive = false;
+let sendPracticeExpectedText = '';
+let sendPracticeCurrentIndex = 0;
+let sendPracticePendingResponse = null; // Stores the pending response callback
 
 /**
  * Event listener setup.
@@ -227,14 +245,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   infoField.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' &amp;&amp; tuButton.style.display !== 'none') {
+    const tuButtonContainer = document.getElementById('tuButtonContainer');
+    if (event.key === 'Enter' &amp;&amp; tuButtonContainer.style.display !== 'none') {
       event.preventDefault();
       tuButton.click();
     }
   });
 
   infoField2.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' &amp;&amp; tuButton.style.display !== 'none') {
+    const tuButtonContainer = document.getElementById('tuButtonContainer');
+    if (event.key === 'Enter' &amp;&amp; tuButtonContainer.style.display !== 'none') {
       event.preventDefault();
       tuButton.click();
     }
@@ -362,30 +382,32 @@ function getModeConfig() {
  */
 function applyModeSettings(mode) {
   const config = modeUIConfig[mode];
-  const tuButton = document.getElementById('tuButton');
+  const tuButtonContainer = document.getElementById('tuButtonContainer');
+  const infoFieldContainer = document.getElementById('infoFieldContainer');
   const infoField = document.getElementById('infoField');
+  const infoField2Container = document.getElementById('infoField2Container');
   const infoField2 = document.getElementById('infoField2');
   const resultsTable = document.getElementById('resultsTable');
   const modeResultsHeader = document.getElementById('modeResultsHeader');
 
   // TU button visibility
-  tuButton.style.display = config.showTuButton ? 'inline-block' : 'none';
+  tuButtonContainer.style.display = config.showTuButton ? 'block' : 'none';
 
   // Info field visibility &amp; placeholder
   if (config.showInfoField) {
-    infoField.style.display = 'inline-block';
+    infoFieldContainer.style.display = 'block';
     infoField.placeholder = config.infoFieldPlaceholder;
   } else {
-    infoField.style.display = 'none';
+    infoFieldContainer.style.display = 'none';
     infoField.value = '';
   }
 
   // Info field 2 visibility &amp; placeholder
   if (config.showInfoField2) {
-    infoField2.style.display = 'inline-block';
+    infoField2Container.style.display = 'block';
     infoField2.placeholder = config.infoField2Placeholder;
   } else {
-    infoField2.style.display = 'none';
+    infoField2Container.style.display = 'none';
     infoField2.value = '';
   }
 
@@ -450,6 +472,57 @@ function changeMode() {
 }
 
 /**
+ * Handles characters decoded in send practice mode
+ * @param {string} letter - The decoded letter
+ * @returns {boolean} True if handled
+ */
+function handleSendPracticeCharacter(letter) {
+  if (!sendPracticeActive) return false;
+
+  const letterUpper = letter.toUpperCase();
+
+  // Determine which decoded text element to use (CQ or Send)
+  const cqDecodedText = document.getElementById('cqDecodedText');
+  const sendDecodedText = document.getElementById('sendDecodedText');
+  const cqTxText = document.getElementById('cqTxText');
+  const sendTxText = document.getElementById('sendTxText');
+
+  let decodedTextEl, txTextEl;
+
+  // Check which mode we're in based on which decoded text is visible
+  if (cqDecodedText &amp;&amp; cqDecodedText.style.display !== 'none') {
+    decodedTextEl = cqDecodedText;
+    txTextEl = cqTxText;
+  } else if (sendDecodedText &amp;&amp; sendDecodedText.style.display !== 'none') {
+    decodedTextEl = sendDecodedText;
+    txTextEl = sendTxText;
+  } else {
+    return false; // No active decoded text display
+  }
+
+  // Append the decoded letter to the decoded text display
+  decodedTextEl.textContent += letterUpper;
+
+  // Check if we've completed the expected text
+  const expectedText = Array.from(txTextEl.querySelectorAll('.char')).map(el => el.textContent).join('');
+
+  if (decodedTextEl.textContent.length >= expectedText.length) {
+    // Message complete
+    sendPracticeActive = false;
+    morseInput.clearCustomDecodedLetterHandler();
+    morseInput.setWordSpacing(false); // Disable word spacing
+
+    // Trigger the pending station response
+    if (sendPracticePendingResponse) {
+      sendPracticePendingResponse();
+      sendPracticePendingResponse = null;
+    }
+  }
+
+  return true; // We handled it
+}
+
+/**
  * Handles the "CQ" button click to call stations.
  *
  * - In multi-station modes, calling CQ adds more stations if enabled.
@@ -479,21 +552,77 @@ function cq() {
   yourStation.player = createMorsePlayer(yourStation);
 
   let cqMsg = modeConfig.cqMessage(yourStation, null, null);
-  let yourResponseTimer = yourStation.player.playSentence(
-    cqMsg,
-    audioContext.currentTime + backgroundStaticDelay
-  );
-  updateAudioLock(yourResponseTimer);
+
+  // Prepare TX text display for CQ
+  const cqTxText = document.getElementById('cqTxText');
+  const cqDecodedText = document.getElementById('cqDecodedText');
+  prepareTxText(cqTxText, cqMsg);
+
+  let yourResponseTimer;
+
+  if (isSendPracticeMode()) {
+    // Send practice mode: Show text but don't play audio
+    sendPracticeActive = true;
+    sendPracticeExpectedText = cqMsg.toUpperCase();
+    sendPracticeCurrentIndex = 0;
+    yourResponseTimer = audioContext.currentTime; // Immediate
+
+    // Clear and show the decoded text display
+    cqDecodedText.textContent = '';
+    cqDecodedText.style.display = 'inline-block';
+
+    // Enable word spacing for send practice mode
+    morseInput.setWordSpacing(true);
+
+    // Set up custom handler for morse input
+    morseInput.setCustomDecodedLetterHandler(handleSendPracticeCharacter);
+  } else {
+    // Hide decoded text in other modes
+    cqDecodedText.style.display = 'none';
+    // Normal modes: Play audio with or without highlighting
+    const cqCallback = shouldDisplayTxText() ? createHighlightCallback(cqTxText) : null;
+
+    yourResponseTimer = yourStation.player.playSentence(
+      cqMsg,
+      audioContext.currentTime + backgroundStaticDelay,
+      cqCallback
+    );
+    updateAudioLock(yourResponseTimer);
+
+    // Auto-focus response field after CQ is sent
+    if (shouldDisplayTxText()) {
+      const responseField = document.getElementById('responseField');
+      setTimeout(() => {
+        responseField.focus();
+      }, (yourResponseTimer - audioContext.currentTime) * 1000);
+    }
+  }
 
   if (modeConfig.showTuStep) {
     // Contest-like modes: CQ adds more stations
     addStations(currentStations, inputs);
-    respondWithAllStations(currentStations, yourResponseTimer);
+
+    if (isSendPracticeMode()) {
+      // Store the response to play after user finishes sending
+      sendPracticePendingResponse = () => {
+        respondWithAllStations(currentStations, audioContext.currentTime);
+      };
+    } else {
+      respondWithAllStations(currentStations, yourResponseTimer);
+    }
     lastRespondingStations = currentStations;
   } else {
     // Single mode: Just get one station
     cqButton.disabled = true;
-    nextSingleStation(yourResponseTimer);
+
+    if (isSendPracticeMode()) {
+      // Store the response to play after user finishes sending
+      sendPracticePendingResponse = () => {
+        nextSingleStation(audioContext.currentTime);
+      };
+    } else {
+      nextSingleStation(yourResponseTimer);
+    }
   }
 }
 
@@ -524,12 +653,39 @@ function send() {
 
   console.log(`--> Sending "${responseFieldText}"`);
 
+  // Prepare TX text display for Send
+  const sendTxText = document.getElementById('sendTxText');
+  const sendDecodedText = document.getElementById('sendDecodedText');
+  const cqDecodedText = document.getElementById('cqDecodedText');
+  prepareTxText(sendTxText, responseFieldText);
+
+  let yourResponseTimer;
+  let sendCallback = null;
+
+  // Set up callback for display modes (not send practice)
+  if (!isSendPracticeMode()) {
+    sendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
+  }
+
   if (modeConfig.showTuStep) {
     // Multi-station scenario
     if (currentStations.length === 0) return;
 
-    let yourResponseTimer = yourStation.player.playSentence(responseFieldText);
-    updateAudioLock(yourResponseTimer);
+    // Check for match type first to determine if we should play audio
+    let results = currentStations.map((stn) =>
+      compareStrings(stn.callsign, responseFieldText.replace('?', ''))
+    );
+    let hasQuestionMark = responseFieldText.includes('?');
+    let isPerfectMatch = results.includes('perfect') &amp;&amp; !hasQuestionMark;
+
+    // Play user's response audio unless it's a perfect match in send practice mode
+    if (!(isSendPracticeMode() &amp;&amp; isPerfectMatch)) {
+      yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
+      updateAudioLock(yourResponseTimer);
+    } else {
+      // In send practice mode with perfect match, don't play audio
+      yourResponseTimer = audioContext.currentTime;
+    }
 
     // Handling repeats
     if (
@@ -564,11 +720,7 @@ function send() {
       return;
     }
 
-    let results = currentStations.map((stn) =>
-      compareStrings(stn.callsign, responseFieldText.replace('?', ''))
-    );
-    let hasQuestionMark = responseFieldText.includes('?');
-
+    // results and hasQuestionMark already calculated above
     if (results.includes('perfect')) {
       let matchIndex = results.indexOf('perfect');
       if (hasQuestionMark) {
@@ -612,19 +764,71 @@ function send() {
           );
         }
 
-        let yourResponseTimer2 = yourStation.player.playSentence(
-          yourExchange,
-          yourResponseTimer
-        );
-        updateAudioLock(yourResponseTimer2);
-        let theirResponseTimer = currentStations[
-          matchIndex
-        ].player.playSentence(theirExchange, yourResponseTimer2 + 0.5);
-        updateAudioLock(theirResponseTimer);
+        // Update the TX text display to show the full message (callsign + exchange)
+        const fullMessage = responseFieldText + yourExchange;
+        prepareTxText(sendTxText, fullMessage);
+
+        let yourResponseTimer2, theirResponseTimer;
+
+        if (isSendPracticeMode()) {
+          // Send practice mode: Update expected text to include exchange
+          sendPracticeExpectedText = fullMessage.toUpperCase();
+          yourResponseTimer2 = audioContext.currentTime;
+
+          // NOW activate send practice mode (after callsign was validated)
+          sendPracticeActive = true;
+
+          // Clear CQ decoded text and show Send decoded text
+          if (cqDecodedText) {
+            cqDecodedText.style.display = 'none';
+          }
+          if (sendDecodedText) {
+            sendDecodedText.textContent = '';
+            sendDecodedText.style.display = 'inline-block';
+          }
+
+          // Enable word spacing and set up custom handler
+          morseInput.setWordSpacing(true);
+          morseInput.setCustomDecodedLetterHandler(handleSendPracticeCharacter);
+
+          // Store the pending response to play after user finishes
+          sendPracticePendingResponse = () => {
+            const theirTime = currentStations[matchIndex].player.playSentence(
+              theirExchange,
+              audioContext.currentTime + 0.5
+            );
+            updateAudioLock(theirTime);
+          };
+        } else {
+          const fullSendCallback = shouldDisplayTxText() ? createHighlightCallback(sendTxText) : null;
+
+          // Play the exchange part with highlighting starting from where the callsign left off
+          yourResponseTimer2 = yourStation.player.playSentence(
+            yourExchange,
+            yourResponseTimer,
+            fullSendCallback ? (index, token) => {
+              // Offset the index by the length of the callsign already sent
+              highlightChar(sendTxText, responseFieldText.length + index);
+            } : null
+          );
+          updateAudioLock(yourResponseTimer2);
+          theirResponseTimer = currentStations[
+            matchIndex
+          ].player.playSentence(theirExchange, yourResponseTimer2 + 0.5);
+          updateAudioLock(theirResponseTimer);
+        }
+
         currentStationAttempts++;
 
-        if (modeConfig.requiresInfoField) {
-          infoField.focus();
+        // Auto-focus info field after exchange is complete (if in display-tx-text mode)
+        if (!isSendPracticeMode()) {
+          if (shouldDisplayTxText() &amp;&amp; modeConfig.requiresInfoField) {
+            setTimeout(() => {
+              infoField.focus();
+            }, (theirResponseTimer - audioContext.currentTime) * 1000);
+          } else if (modeConfig.requiresInfoField) {
+            infoField.focus();
+          }
         }
         readyForTU = true;
         activeStationIndex = matchIndex;
@@ -832,9 +1036,15 @@ function tu() {
     arbitrary
   );
 
+  // Prepare TX text display for TU
+  const tuTxText = document.getElementById('tuTxText');
+  prepareTxText(tuTxText, yourSignoffMessage);
+  const tuCallback = shouldDisplayTxText() ? createHighlightCallback(tuTxText) : null;
+
   let yourResponseTimer = yourStation.player.playSentence(
     yourSignoffMessage,
-    audioContext.currentTime + 0.5
+    audioContext.currentTime + 0.5,
+    tuCallback
   );
   updateAudioLock(yourResponseTimer);
 
@@ -1053,13 +1263,13 @@ function reset() {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MorseInput.html">MorseInput</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addStations">addStations</a></li><li><a href="global.html#addTableRow">addTableRow</a></li><li><a href="global.html#applyModeSettings">applyModeSettings</a></li><li><a href="global.html#changeMode">changeMode</a></li><li><a href="global.html#clearAllInvalidStates">clearAllInvalidStates</a></li><li><a href="global.html#clearFieldInvalid">clearFieldInvalid</a></li><li><a href="global.html#clearTable">clearTable</a></li><li><a href="global.html#compareExtraInfo">compareExtraInfo</a></li><li><a href="global.html#compareStrings">compareStrings</a></li><li><a href="global.html#cq">cq</a></li><li><a href="global.html#createBackgroundStatic">createBackgroundStatic</a></li><li><a href="global.html#createMorsePlayer">createMorsePlayer</a></li><li><a href="global.html#currentMode">currentMode</a></li><li><a href="global.html#generateRandomLetters">generateRandomLetters</a></li><li><a href="global.html#getAudioLock">getAudioLock</a></li><li><a href="global.html#getCallingStation">getCallingStation</a></li><li><a href="global.html#getDOMInputs">getDOMInputs</a></li><li><a href="global.html#getInputs">getInputs</a></li><li><a href="global.html#getModeConfig">getModeConfig</a></li><li><a href="global.html#getRandomNonUSCallsign">getRandomNonUSCallsign</a></li><li><a href="global.html#getRandomUSCallsign">getRandomUSCallsign</a></li><li><a href="global.html#getSelectedCutNumbers">getSelectedCutNumbers</a></li><li><a href="global.html#getSelectedFormats">getSelectedFormats</a></li><li><a href="global.html#getYourStation">getYourStation</a></li><li><a href="global.html#isBackgroundStaticPlaying">isBackgroundStaticPlaying</a></li><li><a href="global.html#markFieldInvalid">markFieldInvalid</a></li><li><a href="global.html#modeLogicConfig">modeLogicConfig</a></li><li><a href="global.html#modeUIConfig">modeUIConfig</a></li><li><a href="global.html#nextSingleStation">nextSingleStation</a></li><li><a href="global.html#normalizeStationGain">normalizeStationGain</a></li><li><a href="global.html#openAccordionSection">openAccordionSection</a></li><li><a href="global.html#printStation">printStation</a></li><li><a href="global.html#randomDigit">randomDigit</a></li><li><a href="global.html#randomElement">randomElement</a></li><li><a href="global.html#reset">reset</a></li><li><a href="global.html#resetGameState">resetGameState</a></li><li><a href="global.html#respondWithAllStations">respondWithAllStations</a></li><li><a href="global.html#send">send</a></li><li><a href="global.html#stop">stop</a></li><li><a href="global.html#stopAllAudio">stopAllAudio</a></li><li><a href="global.html#stopBackgroundStatic">stopBackgroundStatic</a></li><li><a href="global.html#tu">tu</a></li><li><a href="global.html#updateActiveStations">updateActiveStations</a></li><li><a href="global.html#updateAudioLock">updateAudioLock</a></li><li><a href="global.html#updateStaticIntensity">updateStaticIntensity</a></li><li><a href="global.html#updateSummaryRow">updateSummaryRow</a></li><li><a href="global.html#validateInputs">validateInputs</a></li><li><a href="global.html#weightedRandom">weightedRandom</a></li><li><a href="global.html#weightedRandomElement">weightedRandomElement</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MorseInput.html">MorseInput</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addStations">addStations</a></li><li><a href="global.html#addTableRow">addTableRow</a></li><li><a href="global.html#applyModeSettings">applyModeSettings</a></li><li><a href="global.html#changeMode">changeMode</a></li><li><a href="global.html#clearAllInvalidStates">clearAllInvalidStates</a></li><li><a href="global.html#clearFieldInvalid">clearFieldInvalid</a></li><li><a href="global.html#clearHighlights">clearHighlights</a></li><li><a href="global.html#clearTable">clearTable</a></li><li><a href="global.html#compareExtraInfo">compareExtraInfo</a></li><li><a href="global.html#compareStrings">compareStrings</a></li><li><a href="global.html#cq">cq</a></li><li><a href="global.html#createBackgroundStatic">createBackgroundStatic</a></li><li><a href="global.html#createHighlightCallback">createHighlightCallback</a></li><li><a href="global.html#createMorsePlayer">createMorsePlayer</a></li><li><a href="global.html#currentMode">currentMode</a></li><li><a href="global.html#generateRandomLetters">generateRandomLetters</a></li><li><a href="global.html#getAudioLock">getAudioLock</a></li><li><a href="global.html#getCallingStation">getCallingStation</a></li><li><a href="global.html#getCurrentProgressIndex">getCurrentProgressIndex</a></li><li><a href="global.html#getDOMInputs">getDOMInputs</a></li><li><a href="global.html#getDifficultyLevel">getDifficultyLevel</a></li><li><a href="global.html#getExpectedText">getExpectedText</a></li><li><a href="global.html#getInputs">getInputs</a></li><li><a href="global.html#getModeConfig">getModeConfig</a></li><li><a href="global.html#getRandomNonUSCallsign">getRandomNonUSCallsign</a></li><li><a href="global.html#getRandomUSCallsign">getRandomUSCallsign</a></li><li><a href="global.html#getSelectedCutNumbers">getSelectedCutNumbers</a></li><li><a href="global.html#getSelectedFormats">getSelectedFormats</a></li><li><a href="global.html#getYourStation">getYourStation</a></li><li><a href="global.html#handleSendPracticeCharacter">handleSendPracticeCharacter</a></li><li><a href="global.html#highlightChar">highlightChar</a></li><li><a href="global.html#isBackgroundStaticPlaying">isBackgroundStaticPlaying</a></li><li><a href="global.html#isSendPracticeMode">isSendPracticeMode</a></li><li><a href="global.html#markCharCorrect">markCharCorrect</a></li><li><a href="global.html#markCharIncorrect">markCharIncorrect</a></li><li><a href="global.html#markFieldInvalid">markFieldInvalid</a></li><li><a href="global.html#modeLogicConfig">modeLogicConfig</a></li><li><a href="global.html#modeUIConfig">modeUIConfig</a></li><li><a href="global.html#nextSingleStation">nextSingleStation</a></li><li><a href="global.html#normalizeStationGain">normalizeStationGain</a></li><li><a href="global.html#openAccordionSection">openAccordionSection</a></li><li><a href="global.html#prepareTxText">prepareTxText</a></li><li><a href="global.html#printStation">printStation</a></li><li><a href="global.html#randomDigit">randomDigit</a></li><li><a href="global.html#randomElement">randomElement</a></li><li><a href="global.html#reset">reset</a></li><li><a href="global.html#resetGameState">resetGameState</a></li><li><a href="global.html#respondWithAllStations">respondWithAllStations</a></li><li><a href="global.html#send">send</a></li><li><a href="global.html#shouldDisplayTxText">shouldDisplayTxText</a></li><li><a href="global.html#stop">stop</a></li><li><a href="global.html#stopAllAudio">stopAllAudio</a></li><li><a href="global.html#stopBackgroundStatic">stopBackgroundStatic</a></li><li><a href="global.html#tokenizeForDisplay">tokenizeForDisplay</a></li><li><a href="global.html#tu">tu</a></li><li><a href="global.html#updateActiveStations">updateActiveStations</a></li><li><a href="global.html#updateAudioLock">updateAudioLock</a></li><li><a href="global.html#updateStaticIntensity">updateStaticIntensity</a></li><li><a href="global.html#updateSummaryRow">updateSummaryRow</a></li><li><a href="global.html#validateInputs">validateInputs</a></li><li><a href="global.html#weightedRandom">weightedRandom</a></li><li><a href="global.html#weightedRandomElement">weightedRandomElement</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Sat Nov 08 2025 17:10:06 GMT-0500 (Eastern Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Wed Nov 26 2025 12:13:46 GMT-0500 (Eastern Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

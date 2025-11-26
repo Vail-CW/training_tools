@@ -40,6 +40,16 @@ class MorseInput {
    * Handle key events, initializing if needed
    */
   handleKeyEvent(e, down) {
+    // Ignore editing keys (backspace, delete, arrow keys, etc.)
+    const editingKeys = [
+      'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+      'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Enter', 'Escape'
+    ];
+
+    if (editingKeys.includes(e.code)) {
+      return; // Let the browser handle these keys normally
+    }
+
     if (!this.initialized) {
       this.initialize();
     }

@@ -44,7 +44,7 @@ const morseToAlphabet = new Map([
   ['212212', ')'],
   ['222111', ':'],
   // Prosigns (some have same patterns as punctuation)
-  ['211121', '<BK>'],  // Break
+  ['2111212', '<BK>'],  // Break (dah dit dit dit dah dit dah)
   ['12121', '<AR>'],   // End of message
   ['111212', '<SK>'],  // End of transmission
   ['21221', '<KN>'],   // Go ahead specific station (same as '(')

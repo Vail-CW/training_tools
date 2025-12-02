@@ -725,15 +725,13 @@ function send() {
     let hasQuestionMark = responseFieldText.includes('?');
     let isPerfectMatch = results.includes('perfect') && !hasQuestionMark;
 
-    // Play user's response audio unless it's a perfect match in send practice mode
-    // For perfect matches in send practice mode, user will key the exchange in morse
-    // For partial matches/repeats, we still play the audio since user typed (not keyed) it
-    if (!(isSendPracticeMode() && isPerfectMatch)) {
+    // Play user's response audio unless in send practice mode
+    // In send practice mode, user already keyed the message in morse, so don't replay it
+    if (!isSendPracticeMode()) {
       yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
       updateAudioLock(yourResponseTimer);
     } else {
-      // In send practice mode with perfect match, don't play callsign audio
-      // User will key the full exchange in morse after this
+      // In send practice mode, user already keyed it - don't play audio
       yourResponseTimer = audioContext.currentTime;
     }
 

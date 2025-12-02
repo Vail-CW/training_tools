@@ -110,6 +110,34 @@ document.addEventListener('DOMContentLoaded', () => {
   cqButton.addEventListener('click', () => {
     // Initialize morse input when user starts using MorseWalker
     morseInput.initialize();
+
+    // Set up 8 dits callback for clearing fields
+    morseInput.setOnEightDitsCallback(() => {
+      const activeField = document.activeElement;
+
+      // Clear response field if it's active
+      if (activeField === responseField) {
+        responseField.value = '';
+        responseField.dispatchEvent(new Event('input', { bubbles: true }));
+        return;
+      }
+
+      // Clear decoded text in send practice mode if active
+      if (sendPracticeActive) {
+        const cqDecodedText = document.getElementById('cqDecodedText');
+        const sendDecodedText = document.getElementById('sendDecodedText');
+        const tuDecodedText = document.getElementById('tuDecodedText');
+
+        if (cqDecodedText && cqDecodedText.style.display !== 'none') {
+          cqDecodedText.textContent = '';
+        } else if (sendDecodedText && sendDecodedText.style.display !== 'none') {
+          sendDecodedText.textContent = '';
+        } else if (tuDecodedText && tuDecodedText.style.display !== 'none') {
+          tuDecodedText.textContent = '';
+        }
+      }
+    });
+
     cq();
   });
   sendButton.addEventListener('click', send);
@@ -507,13 +535,6 @@ function handleSendPracticeCharacter(letter) {
     txTextEl = tuTxText;
   } else {
     return false; // No active decoded text display
-  }
-
-  // Check for "HH" (8 dits) to clear the decoded text
-  if (decodedTextEl.textContent.endsWith('H') && letterUpper === 'H') {
-    // User sent HH - clear the decoded text and don't add the second H
-    decodedTextEl.textContent = '';
-    return true; // We handled it
   }
 
   // Append the decoded letter to the decoded text display

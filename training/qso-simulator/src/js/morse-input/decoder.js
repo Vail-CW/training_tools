@@ -65,6 +65,7 @@ export class Decoder {
     this.enableWordSpacing = false; // Disabled by default for MorseWalker compatibility
     this.onKeyingStoppedCallback = null; // Callback for when user stops keying
     this.keyingStoppedTimer = null;
+    this.onEightDitsCallback = null; // Callback for when 8 consecutive dits are sent
   }
 
   keyOn() {
@@ -121,6 +122,15 @@ export class Decoder {
 
   registerDit() {
     this.decodeArray += '1';
+
+    // Check for 8 consecutive dits (error correction signal)
+    if (this.decodeArray === '11111111' && this.onEightDitsCallback) {
+      this.onEightDitsCallback();
+      // Clear the decode array so it doesn't get decoded as a letter
+      this.decodeArray = '';
+      // Clear the space timer so it doesn't try to decode
+      clearTimeout(this.spaceTimer);
+    }
   }
 
   registerDah() {
@@ -179,5 +189,13 @@ export class Decoder {
   clearOnKeyingStoppedCallback() {
     this.onKeyingStoppedCallback = null;
     clearTimeout(this.keyingStoppedTimer);
+  }
+
+  setOnEightDitsCallback(callback) {
+    this.onEightDitsCallback = callback;
+  }
+
+  clearOnEightDitsCallback() {
+    this.onEightDitsCallback = null;
   }
 }

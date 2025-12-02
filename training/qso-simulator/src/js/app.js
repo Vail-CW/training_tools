@@ -509,6 +509,13 @@ function handleSendPracticeCharacter(letter) {
     return false; // No active decoded text display
   }
 
+  // Check for "HH" (8 dits) to clear the decoded text
+  if (decodedTextEl.textContent.endsWith('H') && letterUpper === 'H') {
+    // User sent HH - clear the decoded text and don't add the second H
+    decodedTextEl.textContent = '';
+    return true; // We handled it
+  }
+
   // Append the decoded letter to the decoded text display
   decodedTextEl.textContent += letterUpper;
 

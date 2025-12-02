@@ -90,6 +90,15 @@ class MorseInput {
       return;
     }
 
+    // Check for "HH" (8 dits) to clear the field
+    const currentValue = activeField.value;
+    if (currentValue.endsWith('H') && letter === 'H') {
+      // User sent HH - clear the field and don't insert the second H
+      activeField.value = '';
+      activeField.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
+
     // Insert the letter at the cursor position
     const start = activeField.selectionStart;
     const end = activeField.selectionEnd;

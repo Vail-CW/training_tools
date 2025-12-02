@@ -66,6 +66,7 @@ export class Decoder {
     this.onKeyingStoppedCallback = null; // Callback for when user stops keying
     this.keyingStoppedTimer = null;
     this.onEightDitsCallback = null; // Callback for when 8 consecutive dits are sent
+    this.skipNextDecode = false; // Flag to skip decode after 8 dits clear
   }
 
   keyOn() {
@@ -103,6 +104,11 @@ export class Decoder {
     let spaceTime = this.unit * this.farnsworth;
     this.spaceTimer = setTimeout(
       () => {
+        // Skip decode if 8 dits were just cleared
+        if (this.skipNextDecode) {
+          this.skipNextDecode = false;
+          return;
+        }
         // end sequence and decode letter
         this.updateLastLetter(this.morseToLetter(this.decodeArray));
         this.decodeArray = '';
@@ -130,6 +136,8 @@ export class Decoder {
       this.decodeArray = '';
       // Clear the space timer so it doesn't try to decode
       clearTimeout(this.spaceTimer);
+      // Set a flag to skip the next decode attempt
+      this.skipNextDecode = true;
     }
   }
 

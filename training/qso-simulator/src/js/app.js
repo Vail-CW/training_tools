@@ -247,6 +247,27 @@ document.addEventListener('DOMContentLoaded', () => {
     responseField.focus();
   });
 
+  // Handle "2s Delay to Send" checkbox
+  const delayToSendCheckbox = document.getElementById('delayToSend');
+  const clearOnSendCheckbox = document.getElementById('clearOnSend');
+
+  delayToSendCheckbox.addEventListener('change', () => {
+    if (delayToSendCheckbox.checked) {
+      // Enable the 2-second delay to auto-send
+      morseInput.setOnKeyingStoppedCallback(() => {
+        // Only trigger if responseField is focused and has content
+        if (document.activeElement === responseField && responseField.value.trim() !== '') {
+          sendButton.click();
+        }
+      });
+    } else {
+      // Disable the 2-second delay
+      morseInput.clearOnKeyingStoppedCallback();
+    }
+  });
+
+  // Handle "Clear on Send" checkbox - will be checked in send() function
+
   // Local Storage keys for user settings
   const keys = {
     yourCallsign: 'yourCallsign',
@@ -640,6 +661,15 @@ function send() {
   }
 
   console.log(`--> Sending "${responseFieldText}"`);
+
+  // Handle "Clear on Send" checkbox
+  const clearOnSendCheckbox = document.getElementById('clearOnSend');
+  if (clearOnSendCheckbox && clearOnSendCheckbox.checked) {
+    // Clear the response field after capturing the text
+    setTimeout(() => {
+      responseField.value = '';
+    }, 100);
+  }
 
   // Prepare TX text display for Send
   const sendTxText = document.getElementById('sendTxText');

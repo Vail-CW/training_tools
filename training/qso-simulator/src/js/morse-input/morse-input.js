@@ -122,6 +122,23 @@ class MorseInput {
   }
 
   /**
+   * Sets a callback for when the user stops keying (2s delay)
+   * @param {function} callback - Function to call when keying stops
+   */
+  setOnKeyingStoppedCallback(callback) {
+    if (!this.initialized) return;
+    this.decoder.setOnKeyingStoppedCallback(callback);
+  }
+
+  /**
+   * Clears the keying stopped callback
+   */
+  clearOnKeyingStoppedCallback() {
+    if (!this.initialized) return;
+    this.decoder.clearOnKeyingStoppedCallback();
+  }
+
+  /**
    * Updates settings when MorseWalker configuration changes
    * @param {Object} settings - New settings object
    */

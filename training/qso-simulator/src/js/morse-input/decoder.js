@@ -63,11 +63,14 @@ export class Decoder {
     this.wordTimer = null; // Timer for word boundaries
     this.wordTimeout = this.unit * 7; // A typical word gap is 7 units
     this.enableWordSpacing = false; // Disabled by default for MorseWalker compatibility
+    this.onKeyingStoppedCallback = null; // Callback for when user stops keying
+    this.keyingStoppedTimer = null;
   }
 
   keyOn() {
     clearTimeout(this.spaceTimer);
     clearTimeout(this.wordTimer); // Clear the wordTimer as well since we are receiving input
+    clearTimeout(this.keyingStoppedTimer); // Clear keying stopped timer since user is still keying
     this.keyStartTime = Date.now();
     //var pauseDuration = (this.keyEndTime) ? this.keyStartTime - this.keyEndTime : 0;
     //if (pauseDuration > this.unit + (this.unit/10)) { // end sequence and decode letter
@@ -107,6 +110,13 @@ export class Decoder {
       spaceTime,
       'keyOff'
     );
+
+    // Start a 2-second timer for "keying stopped" callback
+    if (this.onKeyingStoppedCallback) {
+      this.keyingStoppedTimer = setTimeout(() => {
+        this.onKeyingStoppedCallback();
+      }, 2000);
+    }
   }
 
   registerDit() {
@@ -160,5 +170,14 @@ export class Decoder {
 
   setFarnsworth(farnsworth) {
     this.farnsworth = farnsworth;
+  }
+
+  setOnKeyingStoppedCallback(callback) {
+    this.onKeyingStoppedCallback = callback;
+  }
+
+  clearOnKeyingStoppedCallback() {
+    this.onKeyingStoppedCallback = null;
+    clearTimeout(this.keyingStoppedTimer);
   }
 }

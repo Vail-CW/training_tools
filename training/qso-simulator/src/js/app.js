@@ -110,6 +110,35 @@ document.addEventListener('DOMContentLoaded', () => {
   cqButton.addEventListener('click', () => {
     // Initialize morse input when user starts using MorseWalker
     morseInput.initialize();
+
+    // Set up 8 dits callback for clearing fields
+    morseInput.setOnEightDitsCallback(() => {
+      // Check send practice mode FIRST (higher priority than response field)
+      if (sendPracticeActive) {
+        const cqDecodedText = document.getElementById('cqDecodedText');
+        const sendDecodedText = document.getElementById('sendDecodedText');
+        const tuDecodedText = document.getElementById('tuDecodedText');
+
+        if (cqDecodedText && cqDecodedText.style.display !== 'none') {
+          cqDecodedText.textContent = '';
+          return;
+        } else if (sendDecodedText && sendDecodedText.style.display !== 'none') {
+          sendDecodedText.textContent = '';
+          return;
+        } else if (tuDecodedText && tuDecodedText.style.display !== 'none') {
+          tuDecodedText.textContent = '';
+          return;
+        }
+      }
+
+      // Clear response field if it's active (and not in send practice mode)
+      const activeField = document.activeElement;
+      if (activeField === responseField) {
+        responseField.value = '';
+        responseField.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+
     cq();
   });
   sendButton.addEventListener('click', send);
@@ -216,6 +245,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Auto-send when question mark is typed
+  responseField.addEventListener('input', (event) => {
+    const value = responseField.value;
+    if (value.includes('?')) {
+      // Small delay to ensure the '?' is in the field before sending
+      setTimeout(() => {
+        sendButton.click();
+      }, 50);
+    }
+  });
+
   infoField.addEventListener('keydown', (event) => {
     const tuButtonContainer = document.getElementById('tuButtonContainer');
     if (event.key === 'Enter' && tuButtonContainer.style.display !== 'none') {
@@ -235,6 +275,27 @@ document.addEventListener('DOMContentLoaded', () => {
   cqButton.addEventListener('click', () => {
     responseField.focus();
   });
+
+  // Handle "2s Delay to Send" checkbox
+  const delayToSendCheckbox = document.getElementById('delayToSend');
+  const clearOnSendCheckbox = document.getElementById('clearOnSend');
+
+  delayToSendCheckbox.addEventListener('change', () => {
+    if (delayToSendCheckbox.checked) {
+      // Enable the 2-second delay to auto-send
+      morseInput.setOnKeyingStoppedCallback(() => {
+        // Only trigger if responseField is focused and has content
+        if (document.activeElement === responseField && responseField.value.trim() !== '') {
+          sendButton.click();
+        }
+      });
+    } else {
+      // Disable the 2-second delay
+      morseInput.clearOnKeyingStoppedCallback();
+    }
+  });
+
+  // Handle "Clear on Send" checkbox - will be checked in send() function
 
   // Local Storage keys for user settings
   const keys = {
@@ -630,6 +691,15 @@ function send() {
 
   console.log(`--> Sending "${responseFieldText}"`);
 
+  // Handle "Clear on Send" checkbox
+  const clearOnSendCheckbox = document.getElementById('clearOnSend');
+  if (clearOnSendCheckbox && clearOnSendCheckbox.checked) {
+    // Clear the response field after capturing the text
+    setTimeout(() => {
+      responseField.value = '';
+    }, 100);
+  }
+
   // Prepare TX text display for Send
   const sendTxText = document.getElementById('sendTxText');
   const sendDecodedText = document.getElementById('sendDecodedText');
@@ -655,12 +725,13 @@ function send() {
     let hasQuestionMark = responseFieldText.includes('?');
     let isPerfectMatch = results.includes('perfect') && !hasQuestionMark;
 
-    // Play user's response audio unless it's a perfect match in send practice mode
-    if (!(isSendPracticeMode() && isPerfectMatch)) {
+    // Play user's response audio unless in send practice mode
+    // In send practice mode, user already keyed the message in morse, so don't replay it
+    if (!isSendPracticeMode()) {
       yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
       updateAudioLock(yourResponseTimer);
     } else {
-      // In send practice mode with perfect match, don't play audio
+      // In send practice mode, user already keyed it - don't play audio
       yourResponseTimer = audioContext.currentTime;
     }
 

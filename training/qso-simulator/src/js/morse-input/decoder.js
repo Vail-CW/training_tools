@@ -63,11 +63,16 @@ export class Decoder {
     this.wordTimer = null; // Timer for word boundaries
     this.wordTimeout = this.unit * 7; // A typical word gap is 7 units
     this.enableWordSpacing = false; // Disabled by default for MorseWalker compatibility
+    this.onKeyingStoppedCallback = null; // Callback for when user stops keying
+    this.keyingStoppedTimer = null;
+    this.onEightDitsCallback = null; // Callback for when 8 consecutive dits are sent
+    this.skipNextDecode = false; // Flag to skip decode after 8 dits clear
   }
 
   keyOn() {
     clearTimeout(this.spaceTimer);
     clearTimeout(this.wordTimer); // Clear the wordTimer as well since we are receiving input
+    clearTimeout(this.keyingStoppedTimer); // Clear keying stopped timer since user is still keying
     this.keyStartTime = Date.now();
     //var pauseDuration = (this.keyEndTime) ? this.keyStartTime - this.keyEndTime : 0;
     //if (pauseDuration > this.unit + (this.unit/10)) { // end sequence and decode letter
@@ -99,6 +104,11 @@ export class Decoder {
     let spaceTime = this.unit * this.farnsworth;
     this.spaceTimer = setTimeout(
       () => {
+        // Skip decode if 8 dits were just cleared
+        if (this.skipNextDecode) {
+          this.skipNextDecode = false;
+          return;
+        }
         // end sequence and decode letter
         this.updateLastLetter(this.morseToLetter(this.decodeArray));
         this.decodeArray = '';
@@ -107,10 +117,28 @@ export class Decoder {
       spaceTime,
       'keyOff'
     );
+
+    // Start a 2-second timer for "keying stopped" callback
+    if (this.onKeyingStoppedCallback) {
+      this.keyingStoppedTimer = setTimeout(() => {
+        this.onKeyingStoppedCallback();
+      }, 2000);
+    }
   }
 
   registerDit() {
     this.decodeArray += '1';
+
+    // Check for 8 consecutive dits (error correction signal)
+    if (this.decodeArray === '11111111' && this.onEightDitsCallback) {
+      this.onEightDitsCallback();
+      // Clear the decode array so it doesn't get decoded as a letter
+      this.decodeArray = '';
+      // Clear the space timer so it doesn't try to decode
+      clearTimeout(this.spaceTimer);
+      // Set a flag to skip the next decode attempt
+      this.skipNextDecode = true;
+    }
   }
 
   registerDah() {
@@ -160,5 +188,22 @@ export class Decoder {
 
   setFarnsworth(farnsworth) {
     this.farnsworth = farnsworth;
+  }
+
+  setOnKeyingStoppedCallback(callback) {
+    this.onKeyingStoppedCallback = callback;
+  }
+
+  clearOnKeyingStoppedCallback() {
+    this.onKeyingStoppedCallback = null;
+    clearTimeout(this.keyingStoppedTimer);
+  }
+
+  setOnEightDitsCallback(callback) {
+    this.onEightDitsCallback = callback;
+  }
+
+  clearOnEightDitsCallback() {
+    this.onEightDitsCallback = null;
   }
 }

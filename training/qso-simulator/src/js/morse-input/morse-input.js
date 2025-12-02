@@ -122,6 +122,40 @@ class MorseInput {
   }
 
   /**
+   * Sets a callback for when the user stops keying (2s delay)
+   * @param {function} callback - Function to call when keying stops
+   */
+  setOnKeyingStoppedCallback(callback) {
+    if (!this.initialized) return;
+    this.decoder.setOnKeyingStoppedCallback(callback);
+  }
+
+  /**
+   * Clears the keying stopped callback
+   */
+  clearOnKeyingStoppedCallback() {
+    if (!this.initialized) return;
+    this.decoder.clearOnKeyingStoppedCallback();
+  }
+
+  /**
+   * Sets a callback for when 8 consecutive dits are sent (error correction)
+   * @param {function} callback - Function to call when 8 dits detected
+   */
+  setOnEightDitsCallback(callback) {
+    if (!this.initialized) return;
+    this.decoder.setOnEightDitsCallback(callback);
+  }
+
+  /**
+   * Clears the 8 dits callback
+   */
+  clearOnEightDitsCallback() {
+    if (!this.initialized) return;
+    this.decoder.clearOnEightDitsCallback();
+  }
+
+  /**
    * Updates settings when MorseWalker configuration changes
    * @param {Object} settings - New settings object
    */

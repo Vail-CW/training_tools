@@ -113,16 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up 8 dits callback for clearing fields
     morseInput.setOnEightDitsCallback(() => {
-      const activeField = document.activeElement;
-
-      // Clear response field if it's active
-      if (activeField === responseField) {
-        responseField.value = '';
-        responseField.dispatchEvent(new Event('input', { bubbles: true }));
-        return;
-      }
-
-      // Clear decoded text in send practice mode if active
+      // Check send practice mode FIRST (higher priority than response field)
       if (sendPracticeActive) {
         const cqDecodedText = document.getElementById('cqDecodedText');
         const sendDecodedText = document.getElementById('sendDecodedText');
@@ -130,11 +121,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (cqDecodedText && cqDecodedText.style.display !== 'none') {
           cqDecodedText.textContent = '';
+          return;
         } else if (sendDecodedText && sendDecodedText.style.display !== 'none') {
           sendDecodedText.textContent = '';
+          return;
         } else if (tuDecodedText && tuDecodedText.style.display !== 'none') {
           tuDecodedText.textContent = '';
+          return;
         }
+      }
+
+      // Clear response field if it's active (and not in send practice mode)
+      const activeField = document.activeElement;
+      if (activeField === responseField) {
+        responseField.value = '';
+        responseField.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
 
@@ -725,11 +726,14 @@ function send() {
     let isPerfectMatch = results.includes('perfect') && !hasQuestionMark;
 
     // Play user's response audio unless it's a perfect match in send practice mode
+    // For perfect matches in send practice mode, user will key the exchange in morse
+    // For partial matches/repeats, we still play the audio since user typed (not keyed) it
     if (!(isSendPracticeMode() && isPerfectMatch)) {
       yourResponseTimer = yourStation.player.playSentence(responseFieldText, audioContext.currentTime, sendCallback);
       updateAudioLock(yourResponseTimer);
     } else {
-      // In send practice mode with perfect match, don't play audio
+      // In send practice mode with perfect match, don't play callsign audio
+      // User will key the full exchange in morse after this
       yourResponseTimer = audioContext.currentTime;
     }
 

@@ -216,6 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Auto-send when question mark is typed
+  responseField.addEventListener('input', (event) => {
+    const value = responseField.value;
+    if (value.includes('?')) {
+      // Small delay to ensure the '?' is in the field before sending
+      setTimeout(() => {
+        sendButton.click();
+      }, 50);
+    }
+  });
+
   infoField.addEventListener('keydown', (event) => {
     const tuButtonContainer = document.getElementById('tuButtonContainer');
     if (event.key === 'Enter' && tuButtonContainer.style.display !== 'none') {

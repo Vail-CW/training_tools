@@ -1,0 +1,322 @@
+/* Vail Training Tools - Common Styles */
+/* Shared across all pages: dark theme, navbar, inputs, buttons */
+
+/* Force Dark Mode */
+html, body {
+	background-color: #0a0a0a !important;
+}
+
+.section {
+	background-color: #0a0a0a !important;
+}
+
+.container {
+	background-color: transparent !important;
+}
+
+/* Dark Theme Base */
+body {
+	background-color: #0a0a0a;
+	color: #e8e8e8;
+}
+
+.title, .label {
+	color: #e8e8e8;
+}
+
+.help {
+	color: #9a9a9a;
+}
+
+/* Ensure all text is readable */
+p, span, div {
+	color: inherit;
+}
+
+a {
+	color: #0af;
+}
+
+a:hover {
+	color: #00d1b2;
+}
+
+.content {
+	color: #e8e8e8;
+}
+
+.content a {
+	color: #0af;
+}
+
+.content a:hover {
+	color: #00d1b2;
+}
+
+/* Navbar Styles */
+.navbar.is-dark {
+	background-color: #1a1a1a !important;
+}
+
+.navbar-item img {
+	margin-right: 1em;
+}
+
+.navbar.is-dark .navbar-item,
+.navbar.is-dark .navbar-link {
+	color: #e8e8e8 !important;
+}
+
+.navbar.is-dark .navbar-item:hover,
+.navbar.is-dark .navbar-link:hover {
+	background-color: #2a2a2a !important;
+	color: #00d1b2 !important;
+}
+
+.navbar.is-dark .navbar-brand .navbar-item {
+	color: #00d1b2 !important;
+}
+
+.navbar.is-dark .navbar-dropdown {
+	background-color: #1a1a1a !important;
+	border-top: 2px solid #00d1b2;
+}
+
+.navbar.is-dark .navbar-dropdown .navbar-item {
+	color: #e8e8e8 !important;
+}
+
+/* Navbar Burger (Mobile Menu) */
+.navbar-burger {
+	color: #e8e8e8 !important;
+}
+
+.navbar-burger:hover {
+	background-color: #2a2a2a !important;
+}
+
+.navbar-burger span {
+	background-color: #e8e8e8 !important;
+}
+
+/* Mobile Menu Background */
+@media screen and (max-width: 1023px) {
+	.navbar-menu {
+		background-color: #1a1a1a !important;
+	}
+
+	.navbar-menu.is-active {
+		display: block;
+	}
+}
+
+/* Center navbar items */
+.navbar-menu-centered {
+	display: flex !important;
+	justify-content: center;
+}
+
+.navbar-menu-centered .navbar-start {
+	flex: 1;
+}
+
+.navbar-menu-centered .navbar-center {
+	display: flex;
+	justify-content: center;
+}
+
+.navbar-menu-centered .navbar-end {
+	flex: 1;
+}
+
+@media screen and (max-width: 1023px) {
+	.navbar-menu-centered {
+		display: block !important;
+	}
+
+	.navbar-menu-centered .navbar-start,
+	.navbar-menu-centered .navbar-center,
+	.navbar-menu-centered .navbar-end {
+		flex: none;
+	}
+}
+
+/* Range Inputs */
+input[type=range] {
+	height: 25px;
+	margin: 10px 0;
+	width: 100%;
+	accent-color: #00d1b2;
+}
+
+/* Keyboard Shortcuts Display */
+kbd {
+    background-color: #eee;
+	color: black;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    font-size: 66%;
+    padding: .1em .6em;
+	cursor: default;
+	vertical-align: middle;
+	margin: 0 0.2em;
+}
+
+/* Input Improvements */
+.input, .textarea, .select select {
+	border-radius: 8px;
+	border: 2px solid #dbdbdb;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus, .textarea:focus, .select select:focus {
+	border-color: #00d1b2;
+	box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.1);
+}
+
+.input, .select select {
+	background-color: #2a2a2a;
+	color: #e8e8e8;
+	border-color: #4a4a4a;
+}
+
+.input::placeholder {
+	color: #7a7a7a;
+}
+
+.select select option {
+	background-color: #1a1a1a;
+	color: #e8e8e8;
+}
+
+/* Button Improvements */
+.button {
+	border-radius: 8px;
+	font-weight: 500;
+	transition: all 0.2s ease;
+}
+
+.button:hover:not(:active):not(:disabled) {
+	transform: translateY(-1px);
+}
+
+.button:not(.is-primary):not(.is-info):not(.is-success):not(.is-danger):not(.is-warning) {
+	background-color: #2a2a2a;
+	border-color: #4a4a4a;
+	color: #e8e8e8;
+}
+
+.button:not(.is-primary):not(.is-info):not(.is-success):not(.is-danger):not(.is-warning):hover {
+	background-color: #3a3a3a;
+	border-color: #5a5a5a;
+}
+
+/* Notification Styling */
+.notification {
+	border-radius: 8px;
+	padding: 1rem;
+	background-color: rgba(26, 26, 26, 0.95);
+	color: #e8e8e8;
+}
+
+.notification a {
+	color: #0af;
+	text-decoration: underline;
+}
+
+.notification a:hover {
+	color: #00d1b2;
+}
+
+.notification strong {
+	color: #fff;
+}
+
+/* Icon Text Alignment */
+.icon-text {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* Tags */
+.tag {
+	background-color: #2a2a2a;
+	color: #e8e8e8;
+}
+
+.tag.is-success {
+	background-color: #48c78e;
+	color: #fff;
+}
+
+.tag.is-info {
+	background-color: #3e8ed0;
+	color: #fff;
+}
+
+.tag.is-warning {
+	background-color: #ffe08a;
+	color: #000;
+}
+
+.tag.is-danger {
+	background-color: #f14668;
+	color: #fff;
+}
+
+/* Settings Dropdown */
+.settings-dropdown-content {
+	display: none;
+	position: absolute;
+	right: 0;
+	min-width: 350px;
+	max-width: 400px;
+	max-height: 80vh;
+	overflow-y: auto;
+	z-index: 1000;
+	background-color: #1a1a1a !important;
+	border: 2px solid #333;
+	border-radius: 8px;
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+#settings-dropdown.is-active .settings-dropdown-content {
+	display: block;
+}
+
+.settings-dropdown-inner {
+	padding: 1.5rem;
+	color: #e8e8e8;
+}
+
+.settings-dropdown-content .field {
+	margin-bottom: 1rem;
+}
+
+.settings-dropdown-content .label {
+	color: #e8e8e8 !important;
+}
+
+.settings-dropdown-content .help {
+	color: #9a9a9a !important;
+}
+
+/* Muted Icon */
+.muted {
+	display: none;
+}
+
+input[type=range][value="0"] ~ .muted {
+	display: inline-block;
+}
+
+/* Shortcuts Display */
+.shortcuts {
+	font-size: 0.85rem;
+	color: #7a7a7a;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+}

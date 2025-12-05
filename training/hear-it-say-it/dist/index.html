@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="Hear It, Say It - Morse code speech recognition training for instant character recognition">
+  <title>Hear It, Say It | Vail Training</title>
+  <link rel="manifest" href="./assets/manifest-C2C4k5bD.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+  <script type="module" crossorigin src="./assets/index-6Qfkc24Y.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CQ9ECTGV.css">
+</head>
+<body>
+  <!-- Vail Navigation -->
+  <nav class="vail-nav">
+    <a href="../index.html" class="back-link">← Back to Tools</a>
+    <span class="nav-title">Hear It, Say It</span>
+    <span class="beta-badge">BETA</span>
+  </nav>
+
+  <!-- Permission Gate Modal -->
+  <div id="permission-gate" class="modal hidden">
+    <div class="modal-content glass-card">
+      <h2>🎤 Microphone Access Required</h2>
+      <p>This app needs microphone access to recognize your spoken responses.</p>
+      <button id="grant-permission-btn" class="primary-btn">Enable Microphone</button>
+      <div id="permission-error" class="permission-error hidden"></div>
+    </div>
+  </div>
+
+  <div id="app">
+    <header class="app-header">
+      <h1>Hear It, Say It</h1>
+      <button id="settings-toggle" class="icon-btn" aria-label="Settings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <main class="main-content">
+      <!-- Android Not Supported Banner -->
+      <div id="android-banner" class="android-banner hidden">
+        <div class="android-banner-content">
+          <h2>Android Not Supported</h2>
+          <p>Due to limitations with Android Chrome's speech recognition (unavoidable audio chimes and unstable recognition), this tool currently only works reliably on:</p>
+          <ul>
+            <li><strong>Desktop/Laptop</strong> - Chrome, Edge, or Safari</li>
+            <li><strong>iPhone/iPad</strong> - Safari or Chrome</li>
+          </ul>
+          <p class="android-apology">We apologize for the inconvenience. This is a fundamental limitation of Android's Web Speech API that we cannot work around.</p>
+        </div>
+      </div>
+
+      <!-- Mic Test Area -->
+      <section id="mic-test-area" class="glass-card">
+        <h2>🎤 Microphone Test</h2>
+        <p class="mic-instructions">Test your microphone before starting. Click the button and say any letter clearly.</p>
+        <div class="mic-controls">
+          <button id="mic-test-btn" class="secondary-btn">Test Microphone</button>
+          <div id="mic-level-container" class="mic-level-container hidden">
+            <div id="mic-level" class="mic-level"></div>
+          </div>
+        </div>
+        <div id="mic-result" class="mic-result"></div>
+      </section>
+
+      <!-- Practice Area -->
+      <section id="practice-area" class="glass-card">
+        <div class="mode-selector">
+          <div class="mode-toggle">
+            <button id="char-mode-btn" class="mode-btn active">Char</button>
+            <button id="word-mode-btn" class="mode-btn">Word</button>
+            <button id="callsign-mode-btn" class="mode-btn">Callsign <span class="beta-tag">BETA</span></button>
+          </div>
+          <div id="word-length-control" class="word-length-control hidden">
+            <label for="word-length-slider">Word Length</label>
+            <div class="slider-row">
+              <input type="range" id="word-length-slider" min="3" max="5" value="3" step="1">
+              <span id="word-length-value" class="setting-value">3</span>
+            </div>
+            <span id="word-count-info" class="word-count-info"></span>
+          </div>
+          <div id="callsign-format-control" class="callsign-format-control hidden">
+            <label>Callsign Formats</label>
+            <div class="format-checkboxes">
+              <label class="format-checkbox"><input type="checkbox" value="1x1"> 1×1</label>
+              <label class="format-checkbox"><input type="checkbox" value="1x2"> 1×2</label>
+              <label class="format-checkbox"><input type="checkbox" value="2x1"> 2×1</label>
+              <label class="format-checkbox"><input type="checkbox" value="2x2"> 2×2</label>
+              <label class="format-checkbox"><input type="checkbox" value="1x3"> 1×3</label>
+              <label class="format-checkbox"><input type="checkbox" value="2x3" checked> 2×3</label>
+            </div>
+            <span id="callsign-format-info" class="callsign-format-info">e.g., KE9BOS</span>
+          </div>
+        </div>
+        <div id="feedback-display" class="feedback-display">
+          <span id="current-char" class="current-char">—</span>
+          <span id="feedback-text" class="feedback-text">Press Start to begin</span>
+        </div>
+        <div class="practice-buttons">
+          <button id="start-btn" class="primary-btn">Start</button>
+          <button id="recovery-btn" class="recovery-btn hidden">Undo & Fix Mic</button>
+        </div>
+        <button id="accept-answer-btn" class="accept-answer-btn hidden">Accept My Answer</button>
+        <div id="listening-indicator" class="listening-indicator hidden">
+          <div class="pulse-ring"></div>
+          <span>Listening...</span>
+        </div>
+        <div id="practice-level-container" class="practice-level-container hidden">
+          <div id="practice-level" class="practice-level"></div>
+        </div>
+        <div id="debug-heard" class="debug-heard"></div>
+      </section>
+
+      <!-- Progress Chart -->
+      <section id="chart-section" class="glass-card">
+        <div class="chart-header">
+          <h2>ICR Practice History</h2>
+          <div class="chart-toggle">
+            <button id="char-chart-btn" class="chart-btn active">Char</button>
+            <button id="word-chart-btn" class="chart-btn">Word</button>
+            <button id="callsign-chart-btn" class="chart-btn">Callsign</button>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="dot green"></span> Instant (&lt;600ms)</span>
+          <span class="legend-item"><span class="dot yellow"></span> Recognition (&lt;2000ms)</span>
+          <span class="legend-item"><span class="dot red"></span> Learning</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="progress-chart"></canvas>
+        </div>
+      </section>
+
+      <!-- Settings Panel (hidden by default) -->
+      <aside id="settings-panel" class="settings-panel hidden">
+        <div class="settings-header">
+          <h2>Settings</h2>
+          <button id="close-settings" class="icon-btn" aria-label="Close">×</button>
+        </div>
+
+        <div class="setting-group">
+          <label for="speed-slider">Character Speed (WPM)</label>
+          <p class="setting-description">How fast the morse code is played (words per minute)</p>
+          <input type="range" id="speed-slider" min="15" max="40" value="25">
+          <span id="speed-value" class="setting-value">25</span>
+        </div>
+
+        <div class="setting-group">
+          <label for="gain-slider">Adaptive Gain</label>
+          <p class="setting-description">How much to favor slower characters. 0 = random, 100 = focus on weak spots</p>
+          <input type="range" id="gain-slider" min="0" max="100" value="50">
+          <span id="gain-value" class="setting-value">50</span>
+        </div>
+
+        <div class="setting-group">
+          <label class="toggle-label">
+            <div class="toggle-switch">
+              <input type="checkbox" id="repeat-toggle">
+              <span class="toggle-slider"></span>
+            </div>
+            <span>Repeat until correct</span>
+          </label>
+          <p class="setting-description">When wrong, replay the character until you get it right</p>
+        </div>
+
+        <div class="setting-group">
+          <label class="toggle-label">
+            <div class="toggle-switch">
+              <input type="checkbox" id="strict-nato-toggle">
+              <span class="toggle-slider"></span>
+            </div>
+            <span>Strict NATO Mode</span>
+          </label>
+          <p class="setting-description">Only accept NATO phonetic words (Alpha, Bravo, etc.) and single letters</p>
+        </div>
+
+        <div class="setting-group">
+          <label for="freq-slider">Tone Frequency (Hz)</label>
+          <p class="setting-description">The pitch of the morse code tone. Higher = sharper, lower = deeper</p>
+          <input type="range" id="freq-slider" min="400" max="1000" value="700">
+          <span id="freq-value" class="setting-value">700</span>
+        </div>
+
+        <div class="setting-group">
+          <h3>Character Set</h3>
+          <div id="character-sets" class="character-sets">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <h3>Custom Characters</h3>
+          <div id="custom-chars" class="custom-chars">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <div class="setting-group actions">
+          <button id="save-history" class="secondary-btn">Save History</button>
+          <button id="load-history" class="secondary-btn">Load History</button>
+          <input type="file" id="history-file" accept=".json" hidden>
+          <button id="reset-history" class="danger-btn">Reset All</button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Break Timer Modal -->
+    <div id="break-modal" class="modal hidden">
+      <div class="modal-content glass-card">
+        <h2>Take a Break!</h2>
+        <p>You've been practicing for 10 minutes. Give your brain a rest.</p>
+        <button id="dismiss-break" class="primary-btn">Continue Anyway</button>
+      </div>
+    </div>
+
+    <!-- Browser Warning Banner -->
+    <div id="browser-warning" class="browser-warning hidden">
+      <span>For the best experience on Android, please use Chrome. Speech recognition may not work in other browsers.</span>
+      <button id="dismiss-browser-warning" class="dismiss-btn" aria-label="Dismiss">×</button>
+    </div>
+  </div>
+
+</body>
+</html>

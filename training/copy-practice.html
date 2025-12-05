@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Copy Practice - Vail Training Tools</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<meta property="og:url" content="https://training.vailmorse.com/copy-practice.html">
+		<meta property="og:type" content="website">
+		<meta property="og:title" content="Copy Practice - Vail Training Tools">
+		<meta property="og:description" content="Practice copying Morse code by ear">
+
+		<!-- Bulma CSS -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
+
+		<!-- Vail Training styles -->
+		<link rel="stylesheet" href="css/common.css?v=1.1.0">
+		<link rel="stylesheet" href="css/practice.css?v=1.1.0">
+	</head>
+	<body>
+		<!-- Navbar with back link and settings -->
+		<nav class="navbar is-dark">
+			<div class="navbar-brand">
+				<a class="navbar-item" href="index.html">
+					<div class="block">Vail Training</div>
+				</a>
+				<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" id="navbar-burger">
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+				</a>
+			</div>
+			<div class="navbar-menu navbar-menu-centered" id="navbar-menu">
+				<div class="navbar-start">
+					<a class="navbar-item back-link" href="index.html">
+						<span class="icon"><i class="mdi mdi-arrow-left"></i></span>
+						<span>Back to Tools</span>
+					</a>
+				</div>
+				<div class="navbar-center">
+					<a class="navbar-item" href="http://vailmorse.com">
+						<span class="icon"><i class="mdi mdi-radio-tower"></i></span>
+						<span>Repeater</span>
+					</a>
+					<a class="navbar-item" href="index.html">
+						<span class="icon"><i class="mdi mdi-school"></i></span>
+						<span>Training</span>
+						<span class="tag is-info is-light ml-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">BETA</span>
+					</a>
+					<div class="navbar-item has-dropdown" id="settings-dropdown">
+						<a class="navbar-link" id="settings-toggle">
+							<span class="icon"><i class="mdi mdi-cog"></i></span>
+							<span>Settings</span>
+						</a>
+						<div class="navbar-dropdown is-right settings-dropdown-content" id="settings-content">
+							<div class="settings-dropdown-inner">
+								<div class="block">
+									<button id="reset" class="button is-warning is-light is-small is-fullwidth">
+										Reset All Settings
+									</button>
+									<p class="help">
+										Reset all training preferences to default.
+									</p>
+								</div>
+
+								<div class="field">
+									<label class="label is-small">
+										<span>Volume</span>:
+										<output for="masterGain"></output>%
+										<i class="mdi mdi-volume-off muted"></i>
+									</label>
+									<div class="control">
+										<input
+											id="masterGain"
+											type="range"
+											min="0"
+											max="100"
+											value="100"
+											step="1">
+									</div>
+								</div>
+
+								<div class="field">
+									<label class="label is-small">
+										<span>Tone Frequency</span>:
+										<output for="tone-freq"></output>Hz
+									</label>
+									<div class="control">
+										<input
+											id="tone-freq"
+											type="range"
+											min="400"
+											max="1000"
+											value="600"
+											step="10">
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<a class="navbar-item" href="https://discord.gg/GBzj8cBat7" target="_blank" title="Text/voice chat on Discord"><i class="mdi mdi-discord"></i></a>
+				</div>
+				<div class="navbar-end"></div>
+			</div>
+		</nav>
+
+		<section class="section">
+			<div class="container is-max-widescreen">
+				<div class="columns is-variable is-6">
+					<!-- Left Column: Practice Area -->
+					<div class="column is-8">
+						<div class="box practice-box mb-5">
+							<div class="level mb-4">
+								<div class="level-left">
+									<div class="level-item">
+										<h1 class="title is-4">
+											<span class="icon-text">
+												<span class="icon"><i class="mdi mdi-headphones"></i></span>
+												<span>Copy Practice</span>
+											</span>
+										</h1>
+									</div>
+								</div>
+								<div class="level-right">
+									<div class="level-item">
+										<span class="tag recv-lamp is-medium">
+											<i class="mdi mdi-ear-hearing"></i>
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Practice Controls -->
+							<div class="block">
+								<div class="columns is-variable is-4">
+									<div class="column">
+										<div class="field">
+											<label class="label is-small">Practice Mode</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="practice-mode">
+														<option value="letters">All Letters</option>
+														<option value="numbers">All Numbers</option>
+														<option value="mixed">Letters & Numbers</option>
+														<option value="custom">Custom Selection</option>
+														<option value="words">Common Words</option>
+														<option value="callsigns">Callsigns</option>
+														<option value="qcodes">Q Codes</option>
+														<option value="cwacademy">CW Academy</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column" id="cwa-session-container" style="display: none;">
+										<div class="field">
+											<label class="label is-small">CWA Beginner Session</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="cwa-session">
+														<option value="1">Session 1</option>
+														<option value="2">Session 2</option>
+														<option value="3">Session 3</option>
+														<option value="4">Session 4</option>
+														<option value="5">Session 5</option>
+														<option value="6">Session 6</option>
+														<option value="7">Session 7</option>
+														<option value="8">Session 8</option>
+														<option value="9">Session 9</option>
+														<option value="10">Session 10</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column">
+										<div class="field">
+											<label class="label is-small">
+												<span>Speed</span>:
+												<output for="practice-wpm"></output> WPM
+											</label>
+											<div class="control">
+												<input
+													id="practice-wpm"
+													type="range"
+													min="5"
+													max="40"
+													step="1"
+													value="12">
+											</div>
+										</div>
+									</div>
+									<div class="column" id="char-count-container">
+										<div class="field">
+											<label class="label is-small">
+												<span>Characters</span>:
+												<output for="char-count"></output>
+											</label>
+											<div class="control">
+												<input
+													id="char-count"
+													type="range"
+													min="1"
+													max="10"
+													step="1"
+													value="1">
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- Custom Character Selection -->
+								<div id="custom-selection" style="display: none;">
+									<div class="field">
+										<label class="label is-small">Select Characters to Practice</label>
+										<div class="buttons are-small" id="letter-selector">
+											<!-- Letters will be added dynamically -->
+										</div>
+									</div>
+									<div class="field">
+										<label class="label is-small">Numbers</label>
+										<div class="buttons are-small" id="number-selector">
+											<!-- Numbers will be added dynamically -->
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Status Display -->
+							<div class="block">
+								<div class="practice-display">
+									<div class="morse-display">
+										<div id="morse-visual" class="morse-visual-area">
+											<span class="has-text-grey-light">Press Start to begin...</span>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Answer Input -->
+							<div class="block">
+								<div class="field">
+									<label class="label is-small">Your Answer</label>
+									<div class="control">
+										<input class="input is-medium" type="text" id="answer-input" placeholder="Type what you heard..." disabled style="text-transform: uppercase;">
+									</div>
+								</div>
+							</div>
+
+							<!-- Control Buttons -->
+							<div class="block">
+								<div class="buttons is-centered">
+									<button class="button is-primary is-medium" id="start-btn">
+										<span class="icon"><i class="mdi mdi-play"></i></span>
+										<span>Start Practice</span>
+									</button>
+									<button class="button is-info is-medium" id="repeat-btn" disabled>
+										<span class="icon"><i class="mdi mdi-repeat"></i></span>
+										<span>Repeat</span>
+									</button>
+									<button class="button is-success is-medium" id="check-btn" disabled>
+										<span class="icon"><i class="mdi mdi-check"></i></span>
+										<span>Check Answer</span>
+									</button>
+									<button class="button is-warning is-medium" id="show-answer-btn" disabled style="display: none;">
+										<span class="icon"><i class="mdi mdi-eye"></i></span>
+										<span>Show Answer</span>
+									</button>
+									<button class="button is-info is-medium" id="continue-btn" disabled style="display: none;">
+										<span class="icon"><i class="mdi mdi-arrow-right"></i></span>
+										<span>Continue</span>
+									</button>
+									<button class="button is-danger is-medium" id="stop-btn" disabled>
+										<span class="icon"><i class="mdi mdi-stop"></i></span>
+										<span>Stop</span>
+									</button>
+								</div>
+								<p class="help has-text-centered has-text-grey">Tip: Press spacebar to repeat when the answer field is empty</p>
+							</div>
+
+							<!-- Results Display -->
+							<div class="block" id="result-area" style="display: none;">
+								<div class="notification">
+									<p class="has-text-centered is-size-5">
+										<strong id="result-text"></strong>
+									</p>
+									<p class="has-text-centered has-text-grey-light is-size-6" id="correct-answer"></p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Right Column: Stats & Info -->
+					<div class="column is-4">
+						<!-- Statistics -->
+						<div class="box stats-box mb-5">
+							<h2 class="title is-6 has-text-weight-semibold mb-3">
+								<span class="icon-text">
+									<span class="icon"><i class="mdi mdi-chart-line"></i></span>
+									<span>Session Stats</span>
+								</span>
+							</h2>
+							<div class="content">
+								<div class="stat-item">
+									<span class="stat-label">Attempts:</span>
+									<span class="stat-value" id="stat-attempts">0</span>
+								</div>
+								<div class="stat-item">
+									<span class="stat-label">Correct:</span>
+									<span class="stat-value has-text-success" id="stat-correct">0</span>
+								</div>
+								<div class="stat-item">
+									<span class="stat-label">Accuracy:</span>
+									<span class="stat-value" id="stat-accuracy">0%</span>
+								</div>
+								<div class="stat-item">
+									<span class="stat-label">Current Speed:</span>
+									<span class="stat-value" id="stat-speed">12 WPM</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- CW Key Adapter Promo -->
+						<div class="box mb-5" style="padding: 1.25rem; background-color: rgba(0, 134, 102, 0.2); border: 2px solid #086;">
+							<div style="text-align: center; margin-bottom: 0.5rem;">
+								<span class="icon" style="font-size: 2rem; color: #0af;">
+									<i class="mdi mdi-usb"></i>
+								</span>
+							</div>
+							<p class="is-size-7" style="line-height: 1.5; color: #e8e8e8; text-align: center;">
+								<strong style="color: #fff; font-size: 0.9rem;">Interested in using a real CW Key with your computer?</strong>
+								<br><br>
+								Check out how to build your own adapter or purchase one at
+								<br>
+								<a href="https://www.vailadapter.com" target="_blank" style="color: #0af; text-decoration: underline; font-weight: 600;">www.vailadapter.com</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Scripts -->
+		<script src="js/common/morse-data.js?v=1.1.0"></script>
+		<script src="js/common/audio.js?v=1.1.0"></script>
+		<script src="js/common/settings.js?v=1.1.0"></script>
+		<script src="js/copy-practice.js?v=1.1.0"></script>
+	</body>
+</html>

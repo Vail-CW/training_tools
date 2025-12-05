@@ -1,0 +1,316 @@
+/* Vail Training Tools - Landing Page Card Styles */
+/* Matching vailadapter.com design */
+
+/* Hero section styling */
+.hero-section {
+    background-color: #0a0a0a;
+    padding-bottom: 1rem;
+}
+
+.hero-section .title {
+    color: #e8e8e8;
+}
+
+.hero-section .subtitle {
+    color: #b0b0b0;
+}
+
+/* Cards section */
+.cards-section {
+    background-color: #0a0a0a;
+    padding-top: 2rem;
+    min-height: calc(100vh - 200px);
+}
+
+/* Tool Grid */
+.tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto 3rem auto;
+}
+
+/* Tool Card */
+.tool-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 2rem;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(0, 209, 178, 0.3);
+}
+
+/* Card Icon */
+.card-icon {
+    font-size: 3rem;
+    color: #6d9eeb;
+    margin-bottom: 1rem;
+    transition: color 0.3s ease;
+}
+
+.tool-card:hover .card-icon {
+    color: #00d1b2;
+}
+
+/* Card Badge (BETA) */
+.card-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #03dac6;
+    color: #121212;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Coming Soon Badge */
+.card-badge-coming-soon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #6c757d;
+    color: #fff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Disabled Tool Card */
+.tool-card-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.tool-card-disabled .card-icon {
+    color: #6c757d;
+}
+
+/* Card Title */
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #e8e8e8;
+    margin-bottom: 0.75rem;
+}
+
+/* Card Description */
+.card-description {
+    color: #b0b0b0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+/* Feature Badges */
+.card-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.feature-badge {
+    background: rgba(0, 209, 178, 0.15);
+    color: #00d1b2;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Promo Banner (thin, above cards) */
+.promo-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 600px;
+    margin: 0 auto 2rem auto;
+    padding: 0.6rem 1rem;
+    background: rgba(0, 134, 102, 0.15);
+    border: 1px solid #086;
+    border-radius: 8px;
+    text-align: center;
+    color: #b0b0b0;
+    font-size: 0.9rem;
+}
+
+.promo-banner .icon {
+    color: #0af;
+    font-size: 1.2rem;
+}
+
+.promo-banner a {
+    color: #0af;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.promo-banner a:hover {
+    color: #00d1b2;
+}
+
+/* Friends Section */
+.friends-section {
+    max-width: 900px;
+    margin: 3rem auto 0 auto;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.friends-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #e8e8e8;
+    margin-bottom: 0.5rem;
+}
+
+.friends-title .icon {
+    color: #6d9eeb;
+}
+
+.friends-subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.friend-link {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.friend-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(0, 209, 178, 0.3);
+}
+
+.friend-link .mdi-open-in-new {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.friend-link:hover .mdi-open-in-new {
+    color: #00d1b2;
+}
+
+.friend-name {
+    font-weight: 600;
+    color: #e8e8e8;
+    margin-bottom: 0.25rem;
+}
+
+.friend-desc {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* Footer */
+.footer {
+    background-color: #1a1a1a;
+    padding: 1.5rem;
+}
+
+.footer .content p {
+    color: #b0b0b0;
+}
+
+.footer a {
+    color: #0af;
+}
+
+.footer a:hover {
+    color: #00d1b2;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .tool-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 0 1rem;
+    }
+
+    .tool-card {
+        padding: 1.5rem;
+        min-height: 240px;
+    }
+
+    .card-icon {
+        font-size: 2.5rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+    }
+
+    .hero-section .title {
+        font-size: 1.75rem;
+    }
+
+    .hero-section .subtitle {
+        font-size: 1rem;
+    }
+
+    .promo-banner {
+        margin: 0 1rem 1.5rem 1rem;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    .friends-section {
+        margin: 2rem 1rem 0 1rem;
+        padding-top: 1.5rem;
+    }
+
+    .friends-title {
+        font-size: 1.1rem;
+    }
+
+    .friends-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,405 @@
+/* Vail Training Tools - Practice Module Styles */
+/* Boxes, stats, lamps, practice display, morse visuals */
+
+/* Modern Box Styles */
+.box {
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	transition: box-shadow 0.3s ease, transform 0.2s ease;
+	background-color: #1a1a1a;
+	color: #e8e8e8;
+}
+
+.box:hover {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.practice-box,
+.stats-box {
+	padding: 1.5rem;
+}
+
+/* Key Buttons */
+.key {
+	height: 3.5em;
+	border-radius: 10px;
+	font-size: 1.25rem;
+	font-weight: 600;
+	transition: transform 0.1s ease, box-shadow 0.1s ease;
+	margin: 0 0.5rem;
+}
+
+.key:active {
+	transform: translateY(2px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.key-buttons {
+	gap: 1rem;
+}
+
+/* Receive Lamp */
+.tag.recv-lamp {
+	background-color: #444;
+	color: white;
+}
+
+.tag.recv-lamp.active {
+	background-color: orange;
+	color: black;
+	animation: pulse 1s ease-in-out infinite;
+}
+
+/* Send Lamp */
+.tag.send-lamp {
+	background-color: #444;
+	color: white;
+}
+
+.tag.send-lamp.active {
+	background-color: #00d1b2;
+	color: black;
+	box-shadow: 0 0 10px #00d1b2;
+}
+
+/* Free Practice Lamp */
+.tag.free-lamp {
+	background-color: #444;
+	color: white;
+}
+
+.tag.free-lamp.active {
+	background-color: #00d1b2;
+	color: black;
+	box-shadow: 0 0 10px #00d1b2;
+}
+
+/* Recording Lamp - pulsing red animation */
+.tag.recording-lamp.recording {
+	background-color: #ff3860;
+	color: white;
+	animation: pulse-red 1.5s ease-in-out infinite;
+	box-shadow: 0 0 15px #ff3860;
+}
+
+@keyframes pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+
+@keyframes pulse-red {
+	0%, 100% {
+		opacity: 1;
+		box-shadow: 0 0 15px #ff3860;
+	}
+	50% {
+		opacity: 0.6;
+		box-shadow: 0 0 25px #ff3860;
+	}
+}
+
+/* Practice Display Area */
+.practice-display {
+	background-color: rgba(0, 0, 0, 0.02);
+	border-radius: 8px;
+	padding: 1.5rem;
+	margin-bottom: 1rem;
+}
+
+.morse-display {
+	background-color: #1a1a1a;
+	border-radius: 8px;
+	padding: 1.5rem;
+	min-height: 120px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	border: 2px solid #333;
+}
+
+.morse-visual-area {
+	text-align: center;
+	font-size: 1.25rem;
+	color: #00d1b2;
+	font-family: 'Courier New', monospace;
+	min-height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Morse Code Visual Elements */
+.dit {
+	display: inline-block;
+	width: 0.5em;
+	height: 0.5em;
+	background-color: #00d1b2;
+	border-radius: 50%;
+	margin: 0 0.1em;
+	animation: ditDah 0.3s ease;
+}
+
+.dah {
+	display: inline-block;
+	width: 1.5em;
+	height: 0.5em;
+	background-color: #00d1b2;
+	border-radius: 0.25em;
+	margin: 0 0.1em;
+	animation: ditDah 0.3s ease;
+}
+
+@keyframes ditDah {
+	0% {
+		opacity: 0;
+		transform: scale(0.5);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Statistics Display */
+.stat-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid rgba(219, 219, 219, 0.2);
+}
+
+.stat-item:last-child {
+	border-bottom: none;
+}
+
+.stat-label {
+	font-size: 0.9rem;
+	color: #7a7a7a;
+}
+
+.stat-value {
+	font-size: 1rem;
+	font-weight: 600;
+	color: #00d1b2;
+}
+
+/* Result Area Styles */
+#result-area .notification.is-success {
+	background-color: rgba(72, 199, 142, 0.2);
+	border-left: 4px solid #48c78e;
+	color: #e8e8e8;
+}
+
+#result-area .notification.is-danger {
+	background-color: rgba(241, 70, 104, 0.2);
+	border-left: 4px solid #f14668;
+	color: #e8e8e8;
+}
+
+/* Custom Character Selection */
+#custom-selection {
+	margin-top: 1rem;
+	padding: 1rem;
+	background-color: rgba(0, 134, 102, 0.05);
+	border-radius: 8px;
+	border: 1px solid rgba(0, 134, 102, 0.2);
+}
+
+#custom-selection .field {
+	margin-bottom: 1rem;
+}
+
+#custom-selection .field:last-child {
+	margin-bottom: 0;
+}
+
+#letter-selector,
+#number-selector {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+#letter-selector .button,
+#number-selector .button {
+	min-width: 2.5rem;
+	font-family: 'Courier New', monospace;
+	font-weight: 600;
+}
+
+#letter-selector .button.is-primary,
+#number-selector .button.is-primary {
+	background-color: #00d1b2 !important;
+	color: #fff !important;
+}
+
+/* Send Practice - Target Character Display */
+.target-character {
+	font-size: 8rem;
+	font-weight: 700;
+	font-family: 'Courier New', monospace;
+	color: #00d1b2;
+	text-align: center;
+	line-height: 1;
+	min-height: 10rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Free Practice Specific Styles */
+.free-practice-output {
+	color: #e8e8e8 !important;
+	background-color: rgba(0, 0, 0, 0.3) !important;
+	border: 1px solid #2a2a2a !important;
+	font-family: 'Courier New', monospace;
+	font-size: 1.2rem;
+	letter-spacing: 0.05rem;
+	line-height: 1.6;
+	resize: vertical;
+}
+
+.free-practice-output:focus {
+	border-color: #00d1b2 !important;
+	box-shadow: 0 0 0 0.125em rgba(0, 209, 178, 0.25) !important;
+}
+
+/* Prosign formatting in output */
+.prosign {
+	color: #ffdd57;
+	font-weight: bold;
+	background-color: rgba(255, 221, 87, 0.1);
+	padding: 0 0.2em;
+	border-radius: 3px;
+}
+
+/* Decoding indicator spinner */
+#decoding-indicator .mdi-loading {
+	color: #00d1b2;
+}
+
+/* Statistics tags */
+#char-count-display,
+#word-count-display,
+#speed-indicator {
+	font-family: 'Courier New', monospace;
+	font-weight: 600;
+}
+
+/* Playback preview area */
+#playback-preview-area {
+	animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+#playback-audio {
+	background-color: rgba(0, 0, 0, 0.2);
+	border-radius: 8px;
+}
+
+/* Recording controls */
+#start-recording-btn.is-danger,
+#stop-recording-btn.is-danger {
+	transition: all 0.2s ease;
+}
+
+#start-recording-btn.is-danger:hover {
+	transform: scale(1.05);
+	box-shadow: 0 0 15px rgba(255, 56, 96, 0.5);
+}
+
+#stop-recording-btn.is-danger:hover {
+	transform: scale(1.05);
+}
+
+/* Recording time display pulsing */
+#recording-time {
+	animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.8; }
+}
+
+/* Copy button success state */
+#copy-output-btn.is-success {
+	background-color: #48c774 !important;
+	color: white !important;
+}
+
+/* Practice module fade-in animation */
+.practice-module {
+	animation: fadeInModule 0.3s ease;
+}
+
+@keyframes fadeInModule {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Back navigation link in navbar */
+.back-link {
+	color: #e8e8e8 !important;
+	font-weight: 500;
+}
+
+.back-link:hover {
+	color: #00d1b2 !important;
+	background-color: #2a2a2a !important;
+}
+
+.back-link .icon {
+	margin-right: 0.25rem;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+	.practice-box {
+		padding: 1rem;
+	}
+
+	.morse-visual-area {
+		font-size: 1rem;
+	}
+
+	.key {
+		font-size: 1rem;
+		height: 3em;
+	}
+
+	.target-character {
+		font-size: 5rem;
+		min-height: 6rem;
+	}
+
+	.free-practice-output {
+		font-size: 1rem;
+		min-height: 150px;
+	}
+
+	#char-count-display,
+	#word-count-display,
+	#speed-indicator {
+		font-size: 0.75rem;
+	}
+
+	#playback-preview-area .buttons {
+		flex-direction: column;
+	}
+
+	#playback-preview-area .button {
+		width: 100%;
+		margin-bottom: 0.5rem;
+	}
+}

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Send Practice - Vail Training Tools</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<meta property="og:url" content="https://training.vailmorse.com/send-practice.html">
+		<meta property="og:type" content="website">
+		<meta property="og:title" content="Send Practice - Vail Training Tools">
+		<meta property="og:description" content="Practice sending Morse code with USB CW keys and MIDI adapters">
+
+		<!-- Bulma CSS -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
+
+		<!-- Vail Training styles -->
+		<link rel="stylesheet" href="css/common.css">
+		<link rel="stylesheet" href="css/practice.css">
+	</head>
+	<body>
+		<!-- Navbar with back link and settings -->
+		<nav class="navbar is-dark">
+			<div class="navbar-brand">
+				<a class="navbar-item" href="index.html">
+					<div class="block">Vail Training</div>
+				</a>
+				<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" id="navbar-burger">
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+				</a>
+			</div>
+			<div class="navbar-menu navbar-menu-centered" id="navbar-menu">
+				<div class="navbar-start">
+					<a class="navbar-item back-link" href="index.html">
+						<span class="icon"><i class="mdi mdi-arrow-left"></i></span>
+						<span>Back to Tools</span>
+					</a>
+				</div>
+				<div class="navbar-center">
+					<a class="navbar-item" href="http://vailmorse.com">
+						<span class="icon"><i class="mdi mdi-radio-tower"></i></span>
+						<span>Repeater</span>
+					</a>
+					<a class="navbar-item" href="index.html">
+						<span class="icon"><i class="mdi mdi-school"></i></span>
+						<span>Training</span>
+						<span class="tag is-info is-light ml-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">BETA</span>
+					</a>
+					<div class="navbar-item has-dropdown" id="settings-dropdown">
+						<a class="navbar-link" id="settings-toggle">
+							<span class="icon"><i class="mdi mdi-cog"></i></span>
+							<span>Settings</span>
+						</a>
+						<div class="navbar-dropdown is-right settings-dropdown-content" id="settings-content">
+							<div class="settings-dropdown-inner">
+								<div class="block">
+									<button id="reset" class="button is-warning is-light is-small is-fullwidth">
+										Reset All Settings
+									</button>
+									<p class="help">
+										Reset all training preferences to default.
+									</p>
+								</div>
+
+								<div class="field">
+									<label class="label is-small">
+										<span>Volume</span>:
+										<output for="masterGain"></output>%
+										<i class="mdi mdi-volume-off muted"></i>
+									</label>
+									<div class="control">
+										<input
+											id="masterGain"
+											type="range"
+											min="0"
+											max="100"
+											value="100"
+											step="1">
+									</div>
+								</div>
+
+								<div class="field">
+									<label class="label is-small">
+										<span>Tone Frequency</span>:
+										<output for="tone-freq"></output>Hz
+									</label>
+									<div class="control">
+										<input
+											id="tone-freq"
+											type="range"
+											min="400"
+											max="1000"
+											value="600"
+											step="10">
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<a class="navbar-item" href="https://discord.gg/GBzj8cBat7" target="_blank" title="Text/voice chat on Discord"><i class="mdi mdi-discord"></i></a>
+				</div>
+				<div class="navbar-end"></div>
+			</div>
+		</nav>
+
+		<section class="section">
+			<div class="container is-max-widescreen">
+				<div class="columns is-variable is-6">
+					<!-- Left Column: Practice Area -->
+					<div class="column is-8">
+						<div class="box practice-box mb-5">
+							<div class="level mb-4">
+								<div class="level-left">
+									<div class="level-item">
+										<h1 class="title is-4">
+											<span class="icon-text">
+												<span class="icon"><i class="mdi mdi-keyboard"></i></span>
+												<span>Send Practice</span>
+											</span>
+										</h1>
+									</div>
+								</div>
+								<div class="level-right">
+									<div class="level-item">
+										<span class="tag send-lamp is-medium">
+											<i class="mdi mdi-radio-tower"></i>
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Practice Controls -->
+							<div class="block">
+								<div class="columns is-variable is-4">
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">Send Mode</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="send-mode">
+														<option value="letters">Random Letters</option>
+														<option value="numbers">Random Numbers</option>
+														<option value="mixed">Letters & Numbers</option>
+														<option value="words">Common Words</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">Keyer Mode</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="keyer-mode">
+														<option value="1">Straight Key</option>
+														<option value="7" selected>Iambic A</option>
+														<option value="8">Iambic B</option>
+														<option value="5">Ultimatic</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">
+												Speed (WPM)
+												<output for="send-wpm" class="has-text-primary" style="float: right; font-weight: bold;">20</output>
+											</label>
+											<div class="control">
+												<input class="slider is-fullwidth is-primary" id="send-wpm" type="range" min="5" max="40" value="20" step="1">
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Target Character Display -->
+							<div class="block">
+								<div class="practice-display">
+									<div class="morse-display" style="min-height: 150px; display: flex; align-items: center; justify-content: center;">
+										<div id="target-character" class="target-character" style="font-size: 8rem; font-weight: bold; color: #00d1b2; font-family: monospace;">
+											<span class="has-text-grey-light" style="font-size: 1.5rem;">Press Start to begin...</span>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Decoded Output -->
+							<div class="block">
+								<div class="field">
+									<label class="label is-small">What You Sent</label>
+									<div class="control">
+										<input class="input is-medium" type="text" id="sent-output" placeholder="Send characters with your key..." readonly style="background-color: rgba(255, 255, 255, 0.05); font-family: monospace; font-size: 1.5rem; text-align: center; letter-spacing: 0.3rem;">
+									</div>
+								</div>
+							</div>
+
+							<!-- Control Buttons -->
+							<div class="block">
+								<div class="buttons is-centered">
+									<button class="button is-primary is-medium" id="start-send-btn">
+										<span class="icon"><i class="mdi mdi-play"></i></span>
+										<span>Start Practice</span>
+									</button>
+									<button class="button is-info is-medium" id="next-char-btn" disabled>
+										<span class="icon"><i class="mdi mdi-skip-next"></i></span>
+										<span>Next Character</span>
+									</button>
+									<button class="button is-danger is-medium" id="stop-send-btn" disabled>
+										<span class="icon"><i class="mdi mdi-stop"></i></span>
+										<span>Stop</span>
+									</button>
+								</div>
+							</div>
+
+							<!-- Send Practice Info -->
+							<div class="block">
+								<div class="notification" style="background-color: rgba(0, 134, 102, 0.12); border-left: 4px solid #086; color: #e8e8e8;">
+									<p class="is-size-7">
+										<strong>How to use:</strong> Use your USB CW key adapter or keyboard keys:
+										<br>
+										<strong>MIDI Mode (Vail adapter):</strong> Auto-detected, plug and send!
+										<br>
+										<strong>Keyboard Mode (vband):</strong> Left/Right Ctrl or [ / ] keys
+									</p>
+								</div>
+							</div>
+
+							<!-- Input Status -->
+							<div class="block">
+								<div class="field is-grouped is-grouped-multiline">
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">MIDI Device</span>
+											<span class="tag is-danger" id="midi-status">Not Detected</span>
+										</div>
+									</div>
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">Speed</span>
+											<span class="tag is-info" id="send-speed-display">20 WPM</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Right Column: Stats & Info -->
+					<div class="column is-4">
+						<!-- Statistics -->
+						<div class="box stats-box mb-5">
+							<h2 class="title is-6 has-text-weight-semibold mb-3">
+								<span class="icon-text">
+									<span class="icon"><i class="mdi mdi-chart-line"></i></span>
+									<span>Session Stats</span>
+								</span>
+							</h2>
+							<div class="content">
+								<div class="stat-item">
+									<span class="stat-label">Attempts:</span>
+									<span class="stat-value" id="stat-attempts">0</span>
+								</div>
+								<div class="stat-item">
+									<span class="stat-label">Correct:</span>
+									<span class="stat-value has-text-success" id="stat-correct">0</span>
+								</div>
+								<div class="stat-item">
+									<span class="stat-label">Accuracy:</span>
+									<span class="stat-value" id="stat-accuracy">0%</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- CW Key Adapter Promo -->
+						<div class="box mb-5" style="padding: 1.25rem; background-color: rgba(0, 134, 102, 0.2); border: 2px solid #086;">
+							<div style="text-align: center; margin-bottom: 0.5rem;">
+								<span class="icon" style="font-size: 2rem; color: #0af;">
+									<i class="mdi mdi-usb"></i>
+								</span>
+							</div>
+							<p class="is-size-7" style="line-height: 1.5; color: #e8e8e8; text-align: center;">
+								<strong style="color: #fff; font-size: 0.9rem;">Interested in using a real CW Key with your computer?</strong>
+								<br><br>
+								Check out how to build your own adapter or purchase one at
+								<br>
+								<a href="https://www.vailadapter.com" target="_blank" style="color: #0af; text-decoration: underline; font-weight: 600;">www.vailadapter.com</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Scripts -->
+		<script src="js/common/morse-data.js"></script>
+		<script src="js/common/audio.js"></script>
+		<script src="js/common/settings.js"></script>
+		<script src="js/morse/morse-sounder.js"></script>
+		<script src="js/morse/morse-decoder.js"></script>
+		<script src="js/morse/morse-keyer.js"></script>
+		<script src="js/morse/morse-input-handler.js"></script>
+		<script src="js/morse/morse-pro-adapter.js"></script>
+		<script src="js/send-practice.js"></script>
+	</body>
+</html>

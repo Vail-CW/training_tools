@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Free Practice - Vail Training Tools</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<meta property="og:url" content="https://training.vailmorse.com/free-practice.html">
+		<meta property="og:type" content="website">
+		<meta property="og:title" content="Free Practice - Vail Training Tools">
+		<meta property="og:description" content="Freeform morse sending with real-time decoding and MP3 recording">
+
+		<!-- Bulma CSS -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css">
+
+		<!-- Vail Training styles -->
+		<link rel="stylesheet" href="css/common.css">
+		<link rel="stylesheet" href="css/practice.css">
+	</head>
+	<body>
+		<!-- Navbar with back link and settings -->
+		<nav class="navbar is-dark">
+			<div class="navbar-brand">
+				<a class="navbar-item" href="index.html">
+					<div class="block">Vail Training</div>
+				</a>
+				<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" id="navbar-burger">
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+					<span aria-hidden="true"></span>
+				</a>
+			</div>
+			<div class="navbar-menu navbar-menu-centered" id="navbar-menu">
+				<div class="navbar-start">
+					<a class="navbar-item back-link" href="index.html">
+						<span class="icon"><i class="mdi mdi-arrow-left"></i></span>
+						<span>Back to Tools</span>
+					</a>
+				</div>
+				<div class="navbar-center">
+					<a class="navbar-item" href="http://vailmorse.com">
+						<span class="icon"><i class="mdi mdi-radio-tower"></i></span>
+						<span>Repeater</span>
+					</a>
+					<a class="navbar-item" href="index.html">
+						<span class="icon"><i class="mdi mdi-school"></i></span>
+						<span>Training</span>
+						<span class="tag is-info is-light ml-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">BETA</span>
+					</a>
+					<div class="navbar-item has-dropdown" id="settings-dropdown">
+						<a class="navbar-link" id="settings-toggle">
+							<span class="icon"><i class="mdi mdi-cog"></i></span>
+							<span>Settings</span>
+						</a>
+						<div class="navbar-dropdown is-right settings-dropdown-content" id="settings-content">
+							<div class="settings-dropdown-inner">
+								<div class="block">
+									<button id="reset" class="button is-warning is-light is-small is-fullwidth">
+										Reset All Settings
+									</button>
+									<p class="help">
+										Reset all training preferences to default.
+									</p>
+								</div>
+
+								<div class="field">
+									<label class="label is-small">
+										<span>Volume</span>:
+										<output for="masterGain"></output>%
+										<i class="mdi mdi-volume-off muted"></i>
+									</label>
+									<div class="control">
+										<input
+											id="masterGain"
+											type="range"
+											min="0"
+											max="100"
+											value="100"
+											step="1">
+									</div>
+								</div>
+
+								<div class="field">
+									<label class="label is-small">
+										<span>Tone Frequency</span>:
+										<output for="tone-freq"></output>Hz
+									</label>
+									<div class="control">
+										<input
+											id="tone-freq"
+											type="range"
+											min="400"
+											max="1000"
+											value="600"
+											step="10">
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<a class="navbar-item" href="https://discord.gg/GBzj8cBat7" target="_blank" title="Text/voice chat on Discord"><i class="mdi mdi-discord"></i></a>
+				</div>
+				<div class="navbar-end"></div>
+			</div>
+		</nav>
+
+		<section class="section">
+			<div class="container is-max-widescreen">
+				<div class="columns is-variable is-6">
+					<!-- Left Column: Practice Area -->
+					<div class="column is-8">
+						<div class="box practice-box mb-5">
+							<div class="level mb-4">
+								<div class="level-left">
+									<div class="level-item">
+										<h1 class="title is-4">
+											<span class="icon-text">
+												<span class="icon"><i class="mdi mdi-text-box-outline"></i></span>
+												<span>Free Practice</span>
+											</span>
+										</h1>
+									</div>
+								</div>
+								<div class="level-right">
+									<div class="level-item">
+										<span class="tag free-lamp is-medium">
+											<i class="mdi mdi-pencil"></i>
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Practice Controls -->
+							<div class="block">
+								<div class="columns is-variable is-4">
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">Keyer Mode</label>
+											<div class="control">
+												<div class="select is-fullwidth">
+													<select id="free-keyer-mode">
+														<option value="1">Straight Key</option>
+														<option value="7" selected>Iambic A</option>
+														<option value="8">Iambic B</option>
+														<option value="5">Ultimatic</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">
+												Speed (WPM)
+												<output for="free-wpm" class="has-text-primary" style="float: right; font-weight: bold;">20</output>
+											</label>
+											<div class="control">
+												<input class="slider is-fullwidth is-primary" id="free-wpm" type="range" min="5" max="40" value="20" step="1">
+											</div>
+										</div>
+									</div>
+									<div class="column is-4">
+										<div class="field">
+											<label class="label is-small">Recording</label>
+											<div class="control">
+												<div class="buttons">
+													<button class="button is-small is-danger" id="start-recording-btn" title="Start Recording">
+														<span class="icon"><i class="mdi mdi-record-circle"></i></span>
+														<span>Record</span>
+													</button>
+													<button class="button is-small is-danger" id="stop-recording-btn" disabled style="display: none;" title="Stop Recording">
+														<span class="icon"><i class="mdi mdi-stop-circle"></i></span>
+														<span>Stop</span>
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Decoded Output Area -->
+							<div class="block">
+								<div class="field">
+									<label class="label is-small">
+										<span class="icon-text">
+											<span>Your Morse Code</span>
+											<span class="icon" id="decoding-indicator" style="display: none;"><i class="mdi mdi-spin mdi-loading"></i></span>
+										</span>
+										<span style="float: right;">
+											<span id="char-count-display" class="tag is-info">0 chars</span>
+											<span id="word-count-display" class="tag is-info ml-2">0 words</span>
+											<span id="speed-indicator" class="tag is-primary ml-2">0 WPM</span>
+										</span>
+									</label>
+									<div class="control">
+										<textarea class="textarea free-practice-output" id="free-practice-output" placeholder="Send morse code using your CW key or keyboard... decoded text will appear here." readonly style="min-height: 200px; font-family: 'Courier New', monospace; font-size: 1.2rem; letter-spacing: 0.05rem; background-color: rgba(0, 0, 0, 0.3); border: 1px solid #2a2a2a;"></textarea>
+									</div>
+								</div>
+							</div>
+
+							<!-- Control Buttons -->
+							<div class="block">
+								<div class="buttons is-centered">
+									<button class="button is-warning is-medium" id="clear-output-btn">
+										<span class="icon"><i class="mdi mdi-eraser"></i></span>
+										<span>Clear Output</span>
+									</button>
+									<button class="button is-info is-medium" id="copy-output-btn">
+										<span class="icon"><i class="mdi mdi-content-copy"></i></span>
+										<span>Copy Text</span>
+									</button>
+								</div>
+							</div>
+
+							<!-- Recording Playback Preview (Hidden until recording is stopped) -->
+							<div class="block" id="playback-preview-area" style="display: none;">
+								<div class="notification" style="background-color: rgba(0, 134, 102, 0.12); border-left: 4px solid #00d1b2; color: #e8e8e8;">
+									<p class="has-text-weight-semibold mb-3">
+										<span class="icon"><i class="mdi mdi-play-circle"></i></span>
+										Recording Preview
+									</p>
+									<div class="field has-addons">
+										<div class="control is-expanded">
+											<audio id="playback-audio" controls class="is-fullwidth" style="width: 100%;"></audio>
+										</div>
+									</div>
+									<div class="field is-grouped is-grouped-centered mt-3">
+										<div class="control">
+											<button class="button is-success" id="download-recording-btn">
+												<span class="icon"><i class="mdi mdi-download"></i></span>
+												<span>Save MP3</span>
+											</button>
+										</div>
+										<div class="control">
+											<button class="button" id="discard-recording-btn" style="background-color: #2a2a2a; color: #e8e8e8; border-color: #3a3a3a;">
+												<span class="icon"><i class="mdi mdi-delete"></i></span>
+												<span>Discard</span>
+											</button>
+										</div>
+									</div>
+									<p class="help has-text-centered" style="color: #b8b8b8;">
+										<span class="icon"><i class="mdi mdi-clock-outline"></i></span>
+										<span id="recording-duration-display">Duration: 0:00</span>
+									</p>
+								</div>
+							</div>
+
+							<!-- Free Practice Info -->
+							<div class="block">
+								<div class="notification" style="background-color: rgba(0, 134, 102, 0.12); border-left: 4px solid #086; color: #e8e8e8;">
+									<p class="is-size-7">
+										<strong>Free Practice Mode:</strong> Send morse code freely without constraints. Your sending is decoded in real-time with adaptive speed detection.
+										<br>
+										<strong>Input Methods:</strong>
+										<br>
+										&#8226; <strong>MIDI:</strong> Auto-detected Vail adapter or compatible MIDI CW key
+										<br>
+										&#8226; <strong>Keyboard:</strong> Left/Right Ctrl (dit/dah) or [ / ] keys
+										<br>
+										<strong>Recording:</strong> Capture your practice session and save as MP3 (10 minute limit)
+										<br>
+										<strong>Prosigns:</strong> Special characters like <code>&lt;AR&gt;</code>, <code>&lt;BT&gt;</code>, <code>&lt;SK&gt;</code> are automatically detected
+									</p>
+								</div>
+							</div>
+
+							<!-- Straight Key Mode Notice -->
+							<div class="block" id="straight-key-notice" style="display: none;">
+								<div class="notification" style="background-color: rgba(255, 221, 87, 0.12); border-left: 4px solid #ffdd57; color: #e8e8e8;">
+									<p class="is-size-7">
+										<strong><span class="icon"><i class="mdi mdi-information"></i></span> Straight Key Mode:</strong>
+										The decoder will adapt to your sending speed automatically. Send a few characters (e.g., "PARIS") to allow the system to learn your timing. Initial decoding may be inaccurate until the adaptive algorithm adjusts.
+									</p>
+								</div>
+							</div>
+
+							<!-- Input Status -->
+							<div class="block">
+								<div class="field is-grouped is-grouped-multiline">
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">MIDI Device</span>
+											<span class="tag is-danger" id="free-midi-status">Not Detected</span>
+										</div>
+									</div>
+									<div class="control">
+										<div class="tags has-addons">
+											<span class="tag">Recording</span>
+											<span class="tag is-light recording-lamp" id="recording-status">Idle</span>
+										</div>
+									</div>
+									<div class="control" id="recording-time-display" style="display: none;">
+										<div class="tags has-addons">
+											<span class="tag">Time</span>
+											<span class="tag is-warning" id="recording-time">0:00</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Right Column: Stats & Info -->
+					<div class="column is-4">
+						<!-- Statistics -->
+						<div class="box stats-box mb-5">
+							<h2 class="title is-6 has-text-weight-semibold mb-3">
+								<span class="icon-text">
+									<span class="icon"><i class="mdi mdi-chart-line"></i></span>
+									<span>Session Stats</span>
+								</span>
+							</h2>
+							<div class="content">
+								<div class="stat-item">
+									<span class="stat-label">Characters:</span>
+									<span class="stat-value" id="stat-characters">0</span>
+								</div>
+								<div class="stat-item">
+									<span class="stat-label">Words:</span>
+									<span class="stat-value has-text-success" id="stat-words">0</span>
+								</div>
+								<div class="stat-item">
+									<span class="stat-label">Current Speed:</span>
+									<span class="stat-value" id="stat-speed">0 WPM</span>
+								</div>
+							</div>
+						</div>
+
+						<!-- CW Key Adapter Promo -->
+						<div class="box mb-5" style="padding: 1.25rem; background-color: rgba(0, 134, 102, 0.2); border: 2px solid #086;">
+							<div style="text-align: center; margin-bottom: 0.5rem;">
+								<span class="icon" style="font-size: 2rem; color: #0af;">
+									<i class="mdi mdi-usb"></i>
+								</span>
+							</div>
+							<p class="is-size-7" style="line-height: 1.5; color: #e8e8e8; text-align: center;">
+								<strong style="color: #fff; font-size: 0.9rem;">Interested in using a real CW Key with your computer?</strong>
+								<br><br>
+								Check out how to build your own adapter or purchase one at
+								<br>
+								<a href="https://www.vailadapter.com" target="_blank" style="color: #0af; text-decoration: underline; font-weight: 600;">www.vailadapter.com</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Scripts -->
+		<!-- lamejs MP3 encoder (must load first) -->
+		<script src="lib/lame.min.js"></script>
+		<!-- Shared modules -->
+		<script src="js/common/morse-data.js"></script>
+		<script src="js/common/audio.js"></script>
+		<script src="js/common/settings.js"></script>
+		<!-- Morse input modules -->
+		<script src="js/morse/morse-sounder.js"></script>
+		<script src="js/morse/morse-pro-adapter.js"></script>
+		<script src="js/morse/morse-keyer.js"></script>
+		<script src="js/morse/morse-input-handler.js"></script>
+		<script src="js/morse/audio-recorder.js"></script>
+		<!-- Free Practice logic -->
+		<script src="js/free-practice.js"></script>
+	</body>
+</html>

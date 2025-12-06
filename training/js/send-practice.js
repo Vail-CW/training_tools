@@ -20,6 +20,41 @@ document.addEventListener('DOMContentLoaded', () => {
 		correct: 0
 	};
 
+	// Wake lock
+	let wakeLock = null;
+
+	/**
+	 * Request screen wake lock to prevent display from sleeping
+	 */
+	async function requestWakeLock() {
+		if ('wakeLock' in navigator) {
+			try {
+				wakeLock = await navigator.wakeLock.request('screen');
+				console.log('Wake lock acquired');
+
+				// Listen for release events (e.g., tab backgrounded)
+				wakeLock.addEventListener('release', () => {
+					console.log('Wake lock released');
+				});
+			} catch (err) {
+				console.log('Wake lock request failed:', err.message);
+			}
+		} else {
+			console.log('Wake Lock API not supported');
+		}
+	}
+
+	/**
+	 * Release screen wake lock
+	 */
+	async function releaseWakeLock() {
+		if (wakeLock) {
+			await wakeLock.release();
+			wakeLock = null;
+			console.log('Wake lock released');
+		}
+	}
+
 	// UI Elements
 	const startSendBtn = document.getElementById('start-send-btn');
 	const stopSendBtn = document.getElementById('stop-send-btn');
@@ -264,6 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (nextCharBtn) nextCharBtn.disabled = false;
 		if (sentOutput) sentOutput.value = '';
 
+		// Request wake lock to keep screen on during practice
+		requestWakeLock();
+
 		// Generate first target
 		generateNewTarget();
 	}
@@ -274,6 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	function stopSendPractice() {
 		console.log('Stopping send practice...');
 		sendPracticing = false;
+
+		// Release wake lock
+		releaseWakeLock();
 
 		// Update UI
 		if (startSendBtn) startSendBtn.disabled = false;
@@ -368,6 +409,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			localStorage.setItem('vailTrainingSendWpm', wpm);
 		});
 	}
+
+	// Re-acquire wake lock when page becomes visible again (if practicing)
+	document.addEventListener('visibilitychange', async () => {
+		if (document.visibilityState === 'visible' && sendPracticing) {
+			await requestWakeLock();
+		}
+	});
 
 	// Initialize morse input system
 	initMorseInput();

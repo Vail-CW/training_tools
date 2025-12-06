@@ -126,8 +126,41 @@ document.addEventListener('DOMContentLoaded', () => {
 		recordedBlob: null,
 		outputText: '',
 		characterCount: 0,
-		wordCount: 0
+		wordCount: 0,
+		wakeLock: null
 	};
+
+	/**
+	 * Request screen wake lock to prevent display from sleeping
+	 */
+	async function requestWakeLock() {
+		if ('wakeLock' in navigator) {
+			try {
+				freePracticeState.wakeLock = await navigator.wakeLock.request('screen');
+				console.log('Wake lock acquired');
+
+				// Listen for release events (e.g., tab backgrounded)
+				freePracticeState.wakeLock.addEventListener('release', () => {
+					console.log('Wake lock released');
+				});
+			} catch (err) {
+				console.log('Wake lock request failed:', err.message);
+			}
+		} else {
+			console.log('Wake Lock API not supported');
+		}
+	}
+
+	/**
+	 * Release screen wake lock
+	 */
+	async function releaseWakeLock() {
+		if (freePracticeState.wakeLock) {
+			await freePracticeState.wakeLock.release();
+			freePracticeState.wakeLock = null;
+			console.log('Wake lock released');
+		}
+	}
 
 	// Free Practice Elements
 	const freeKeyerModeSelect = document.getElementById('free-keyer-mode');
@@ -304,6 +337,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// Discard Recording button
 		discardRecordingBtn.addEventListener('click', discardFreePracticeRecording);
+
+		// Request wake lock to keep screen on during practice
+		requestWakeLock();
+
+		// Re-acquire wake lock when page becomes visible again
+		document.addEventListener('visibilitychange', async () => {
+			if (document.visibilityState === 'visible') {
+				await requestWakeLock();
+			}
+		});
 
 		console.log('Free Practice initialized and always active');
 	}

@@ -138,6 +138,8 @@ export class PracticeSession {
   private useContinuousMode: boolean = false;
   // Track if we just restarted speech recognition (needs longer delay)
   private justRestartedRecognition: boolean = false;
+  // Screen wake lock to prevent device sleep during practice
+  private wakeLock: WakeLockSentinel | null = null;
 
   // Track last wrong answer for "Accept My Answer" feature
   private lastWrongAnswer: {
@@ -181,6 +183,9 @@ export class PracticeSession {
 
     // Initialize audio level monitor
     this.audioLevelMonitor = new AudioLevelMonitor();
+
+    // Listen for visibility changes to re-acquire wake lock when returning to app
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
 
     this.setupEventListeners();
     this.initializeSpeechRecognition();
@@ -229,6 +234,31 @@ export class PracticeSession {
     this.acceptAnswerBtn?.classList.add('hidden');
     this.lastWrongAnswer = null;
   }
+
+  // Wake lock management - keeps screen awake during practice
+  private async acquireWakeLock(): Promise<void> {
+    if ('wakeLock' in navigator) {
+      try {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+      } catch (err) {
+        // Wake lock request failed (e.g., low battery mode)
+      }
+    }
+  }
+
+  private releaseWakeLock(): void {
+    if (this.wakeLock) {
+      this.wakeLock.release();
+      this.wakeLock = null;
+    }
+  }
+
+  private handleVisibilityChange = async (): Promise<void> => {
+    // Re-acquire wake lock when returning to the app (wake locks are released when backgrounded)
+    if (document.visibilityState === 'visible' && store.getSession().isRunning) {
+      await this.acquireWakeLock();
+    }
+  };
 
   // Handle recovery button - undo last attempt and restart session
   // Uses the exact same stop/start flow as the pause/start buttons
@@ -515,6 +545,9 @@ export class PracticeSession {
     // Ensure audio context is resumed (required after user gesture)
     await resumeAudioContext();
 
+    // Keep screen awake during practice
+    await this.acquireWakeLock();
+
     // Start audio level monitor for visual feedback
     // EXCEPT on Android - getUserMedia blocks Web Speech API from accessing mic
     if (!isAndroid()) {
@@ -555,6 +588,9 @@ export class PracticeSession {
 
   stop(): void {
     store.stopSession();
+
+    // Release screen wake lock
+    this.releaseWakeLock();
 
     // Stop any playing audio
     stopAllAudio();

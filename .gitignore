@@ -7,6 +7,7 @@ netlify-deploy/
 # Deployment documentation
 DEPLOY_INFO.txt
 README for deploy how to.txt
+DEPLOY.md
 
 # Node modules
 node_modules/
@@ -28,3 +29,6 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Local Netlify folder
+.netlify

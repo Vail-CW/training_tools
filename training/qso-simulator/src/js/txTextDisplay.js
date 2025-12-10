@@ -32,6 +32,14 @@ export function isSendPracticeMode() {
 }
 
 /**
+ * Checks if we're in send only mode
+ * @returns {boolean} True if in send only mode
+ */
+export function isSendOnlyMode() {
+  return getDifficultyLevel() === 'send-only';
+}
+
+/**
  * Tokenizes text into display units (characters and prosigns)
  * @param {string} text - The text to tokenize
  * @returns {string[]} Array of tokens

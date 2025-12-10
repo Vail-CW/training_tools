@@ -36,6 +36,7 @@ import { morseInput } from './morse-input/morse-input.js'; // Import morse input
 import {
   shouldDisplayTxText,
   isSendPracticeMode,
+  isSendOnlyMode,
   prepareTxText,
   createHighlightCallback,
   clearHighlights,
@@ -80,6 +81,11 @@ let sendPracticeActive = false;
 let sendPracticeExpectedText = '';
 let sendPracticeCurrentIndex = 0;
 let sendPracticePendingResponse = null; // Stores the pending response callback
+
+// Send Only mode state
+let sendOnlyPhase = 'idle'; // Phases: 'idle', 'cq', 'callsign', 'exchange', 'tu'
+let sendOnlyDecodedText = ''; // Accumulated decoded text from user
+let sendOnlyExpectedState = ''; // Expected state for TU phase
 
 /**
  * Event listener setup.
@@ -138,6 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
         responseField.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
+
+    // Set up Send Only mode handler if in that mode
+    if (isSendOnlyMode()) {
+      morseInput.setWordSpacing(true); // Enable word spacing for Send Only mode
+      morseInput.setCustomDecodedLetterHandler(handleSendOnlyCharacter);
+    }
 
     cq();
   });
@@ -296,6 +308,45 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Handle "Clear on Send" checkbox - will be checked in send() function
+
+  // Handle difficulty level changes
+  const difficultyLevel = document.getElementById('difficultyLevel');
+
+  function updateUIForDifficultyMode() {
+    const isSendOnly = isSendOnlyMode();
+
+    // Disable/enable buttons based on Send Only mode
+    cqButton.disabled = isSendOnly;
+    sendButton.disabled = isSendOnly;
+    tuButton.disabled = isSendOnly;
+
+    // Disable/enable response field (but keep state fields editable)
+    responseField.disabled = isSendOnly;
+    if (isSendOnly) {
+      responseField.classList.add('text-muted');
+
+      // Initialize morse input and set up Send Only handler
+      morseInput.initialize();
+      morseInput.setWordSpacing(true);
+      morseInput.setCustomDecodedLetterHandler(handleSendOnlyCharacter);
+
+      // Reset Send Only state
+      sendOnlyPhase = 'idle';
+      sendOnlyDecodedText = '';
+    } else {
+      responseField.classList.remove('text-muted');
+
+      // Clear Send Only handler if switching away from that mode
+      morseInput.clearCustomDecodedLetterHandler();
+      morseInput.setWordSpacing(false);
+    }
+  }
+
+  // Update UI when difficulty changes
+  difficultyLevel.addEventListener('change', updateUIForDifficultyMode);
+
+  // Initialize UI state on load
+  updateUIForDifficultyMode();
 
   // Local Storage keys for user settings
   const keys = {
@@ -558,6 +609,79 @@ function handleSendPracticeCharacter(letter) {
   }
 
   return true; // We handled it
+}
+
+/**
+ * Handles characters decoded in Send Only mode
+ * @param {string} letter - The decoded letter
+ * @returns {boolean} True if handled
+ */
+function handleSendOnlyCharacter(letter) {
+  if (!isSendOnlyMode()) return false;
+
+  const letterUpper = letter.toUpperCase();
+  sendOnlyDecodedText += letterUpper;
+
+  const cqDecodedText = document.getElementById('cqDecodedText');
+  const cqTxText = document.getElementById('cqTxText');
+  const sendDecodedText = document.getElementById('sendDecodedText');
+  const sendTxText = document.getElementById('sendTxText');
+  const tuDecodedText = document.getElementById('tuDecodedText');
+  const tuTxText = document.getElementById('tuTxText');
+  const responseField = document.getElementById('responseField');
+
+  // CQ Phase: Waiting for user to send CQ
+  if (sendOnlyPhase === 'idle' || sendOnlyPhase === 'cq') {
+    if (sendOnlyDecodedText.startsWith('CQ')) {
+      sendOnlyPhase = 'cq';
+
+      // Show white CQ text and green decoded text
+      if (!cqTxText.innerHTML) {
+        const cqMsg = yourStation.getCqMessage();
+        prepareTxText(cqTxText, cqMsg);
+      }
+      cqDecodedText.textContent = sendOnlyDecodedText;
+      cqDecodedText.style.display = 'inline-block';
+
+      // Check for end signals: <BK>, BK, or K
+      if (sendOnlyDecodedText.endsWith('<BK>') ||
+          sendOnlyDecodedText.endsWith('BK') ||
+          sendOnlyDecodedText.endsWith(' K')) {
+        // Trigger CQ
+        sendOnlyPhase = 'callsign';
+        sendOnlyDecodedText = '';
+        cq();  // Auto-trigger CQ
+      }
+    } else {
+      // Update decoded text even if not starting with CQ
+      cqDecodedText.textContent = sendOnlyDecodedText;
+      cqDecodedText.style.display = 'inline-block';
+    }
+  }
+  // Callsign Phase: User sending callsign
+  else if (sendOnlyPhase === 'callsign') {
+    sendDecodedText.textContent = sendOnlyDecodedText;
+    sendDecodedText.style.display = 'inline-block';
+
+    // Check for end signals to trigger send
+    if (sendOnlyDecodedText.endsWith('<BK>') ||
+        sendOnlyDecodedText.endsWith('BK') ||
+        sendOnlyDecodedText.endsWith(' K')) {
+      // Remove the end signal from the callsign
+      let callsign = sendOnlyDecodedText;
+      if (callsign.endsWith('<BK>')) callsign = callsign.slice(0, -4);
+      else if (callsign.endsWith('BK')) callsign = callsign.slice(0, -2);
+      else if (callsign.endsWith(' K')) callsign = callsign.slice(0, -2);
+
+      // Put callsign in response field and trigger send
+      responseField.value = callsign.trim();
+      sendOnlyDecodedText = '';
+
+      // TODO: Need to call send logic here - will implement next
+    }
+  }
+
+  return true;
 }
 
 /**

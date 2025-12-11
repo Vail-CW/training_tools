@@ -113,17 +113,24 @@ export class Decoder {
         this.updateLastLetter(this.morseToLetter(this.decodeArray));
         this.decodeArray = '';
         this.startWordTimer(); // Start the word timer after finishing a letter
+
+        // Start the keying stopped timer AFTER letter is decoded
+        if (this.onKeyingStoppedCallback) {
+          // Support both function and number for delay
+          let delay;
+          if (typeof this.keyingStoppedDelay === 'function') {
+            delay = this.keyingStoppedDelay();
+          } else {
+            delay = this.keyingStoppedDelay || 2000;
+          }
+          this.keyingStoppedTimer = setTimeout(() => {
+            this.onKeyingStoppedCallback();
+          }, delay);
+        }
       },
       spaceTime,
       'keyOff'
     );
-
-    // Start a 2-second timer for "keying stopped" callback
-    if (this.onKeyingStoppedCallback) {
-      this.keyingStoppedTimer = setTimeout(() => {
-        this.onKeyingStoppedCallback();
-      }, 2000);
-    }
   }
 
   registerDit() {
@@ -190,8 +197,9 @@ export class Decoder {
     this.farnsworth = farnsworth;
   }
 
-  setOnKeyingStoppedCallback(callback) {
+  setOnKeyingStoppedCallback(callback, delayMs = 2000) {
     this.onKeyingStoppedCallback = callback;
+    this.keyingStoppedDelay = delayMs;
   }
 
   clearOnKeyingStoppedCallback() {

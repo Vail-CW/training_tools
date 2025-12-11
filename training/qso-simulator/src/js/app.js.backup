@@ -879,13 +879,6 @@ function triggerSendOnlyCallsignMatch() {
       const matchIndex = results.indexOf('perfect');
       const matchedStation = currentStations[matchIndex];
 
-      // Get yourStation first to ensure we have current field values
-      const currentYourStation = getYourStation();
-      if (!currentYourStation) {
-        console.error('Failed to get yourStation for exchange');
-        return;
-      }
-
       // Play "R R" acknowledgment
       const rrResponseTimer = matchedStation.player.playSentence(
         'R R',
@@ -893,8 +886,25 @@ function triggerSendOnlyCallsignMatch() {
       );
       updateAudioLock(rrResponseTimer);
 
-      // Prepare white exchange text for user to send
+      // Get the exchange info
       const modeConfig = getModeConfig();
+      const theirExchange = modeConfig.theirExchange(matchedStation);
+
+      // Play their exchange
+      const theirResponseTimer = matchedStation.player.playSentence(
+        theirExchange,
+        rrResponseTimer + 0.5
+      );
+      updateAudioLock(theirResponseTimer);
+
+      // Prepare white exchange text for user to send
+      // Re-fetch yourStation to ensure we have current field values
+      const currentYourStation = getYourStation();
+      if (!currentYourStation) {
+        console.error('Failed to get yourStation for exchange');
+        return;
+      }
+
       const yourExchange = modeConfig.yourExchange(currentYourStation, matchedStation, null);
       prepareTxText(sendTxText, yourExchange);
       sendTxText.style.display = 'inline-block';
@@ -907,10 +917,10 @@ function triggerSendOnlyCallsignMatch() {
       activeStationIndex = matchIndex;
       readyForTU = true;
 
-      // Clear any existing auto-send callback - exchange phase uses <BK> detection instead
-      morseInput.clearOnKeyingStoppedCallback();
+      // Set up auto-send callback for exchange phase
+      setupAutoSendCallback();
 
-      console.log('Now waiting for user to send exchange with <BK>');
+      console.log('Station will send exchange:', theirExchange);
     } else if (results.includes('partial')) {
       // Partial match - stations repeat their callsigns
       console.log('Partial match - stations repeating callsigns');
@@ -952,28 +962,11 @@ function triggerSendOnlyExchangeResponse(userExchange) {
   const matchedStation = currentStations[activeStationIndex];
   const yourResponseTimer = audioContext.currentTime;
 
-  // Get yourStation for exchange generation
-  const currentYourStation = getYourStation();
-  if (!currentYourStation) {
-    console.error('Failed to get yourStation for exchange response');
-    return;
-  }
-
-  // Station sends their exchange (e.g., "<BK> UR 5NN MO MO <BK>")
-  const theirExchange = modeConfig.theirExchange(currentYourStation, matchedStation, null);
-  const exchangeResponseTimer = matchedStation.player.playSentence(
-    theirExchange,
-    yourResponseTimer + 0.25
-  );
-  updateAudioLock(exchangeResponseTimer);
-
-  console.log('Station sending their exchange:', theirExchange);
-
-  // Station sends TU acknowledgment after their exchange
+  // Station sends TU acknowledgment
   const tuMessage = 'TU';
   const tuResponseTimer = matchedStation.player.playSentence(
     tuMessage,
-    exchangeResponseTimer + 0.5
+    yourResponseTimer + 0.25
   );
   updateAudioLock(tuResponseTimer);
 
@@ -998,8 +991,8 @@ function triggerSendOnlyExchangeResponse(userExchange) {
   sendOnlyPhase = 'tu';
   sendOnlyDecodedText = '';
 
-  // Clear auto-send callback for TU phase - it ends on E E detection
-  morseInput.clearOnKeyingStoppedCallback();
+  // Set up auto-send callback for TU phase (though TU doesn't auto-send, it ends on E E)
+  setupAutoSendCallback();
 }
 
 /**

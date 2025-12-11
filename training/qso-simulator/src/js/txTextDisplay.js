@@ -20,7 +20,7 @@ export function getDifficultyLevel() {
  */
 export function shouldDisplayTxText() {
   const level = getDifficultyLevel();
-  return level === 'display-tx-text' || level === 'send-practice';
+  return level === 'display-tx-text' || level === 'send-practice' || level === 'send-only';
 }
 
 /**

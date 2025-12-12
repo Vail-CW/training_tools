@@ -734,9 +734,9 @@ function handleSendOnlyCharacter(letter) {
     // Validate state letters as user types
     validateTuStateLetters(tuTxText, sendOnlyDecodedText, sendOnlyExpectedState);
 
-    // Check for "E E" to complete the contact
-    if (sendOnlyDecodedText.includes('E E') && sendOnlyPhase === 'tu') {
-      console.log('E E detected - contact complete!');
+    // Check for "E E" or "EE" to complete the contact
+    if ((sendOnlyDecodedText.includes('E E') || sendOnlyDecodedText.includes('EE')) && sendOnlyPhase === 'tu') {
+      console.log('E E or EE detected - contact complete!');
 
       // Immediately set phase to 'completing' to prevent duplicate triggers
       sendOnlyPhase = 'completing';

@@ -64,6 +64,7 @@ import { morseInput } from './morse-input/morse-input.js'; // Import morse input
 import {
   shouldDisplayTxText,
   isSendPracticeMode,
+  isSendOnlyMode,
   prepareTxText,
   createHighlightCallback,
   clearHighlights,
@@ -108,6 +109,11 @@ let sendPracticeActive = false;
 let sendPracticeExpectedText = '';
 let sendPracticeCurrentIndex = 0;
 let sendPracticePendingResponse = null; // Stores the pending response callback
+
+// Send Only mode state
+let sendOnlyPhase = 'idle'; // Phases: 'idle', 'cq', 'callsign', 'exchange', 'tu'
+let sendOnlyDecodedText = ''; // Accumulated decoded text from user
+let sendOnlyExpectedState = ''; // Expected state for TU phase
 
 /**
  * Event listener setup.
@@ -166,6 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
         responseField.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
+
+    // Set up Send Only mode handler if in that mode
+    if (isSendOnlyMode()) {
+      morseInput.setWordSpacing(true); // Enable word spacing for Send Only mode
+      morseInput.setCustomDecodedLetterHandler(handleSendOnlyCharacter);
+    }
 
     cq();
   });
@@ -304,26 +316,57 @@ document.addEventListener('DOMContentLoaded', () => {
     responseField.focus();
   });
 
-  // Handle "2s Delay to Send" checkbox
-  const delayToSendCheckbox = document.getElementById('delayToSend');
-  const clearOnSendCheckbox = document.getElementById('clearOnSend');
-
-  delayToSendCheckbox.addEventListener('change', () => {
-    if (delayToSendCheckbox.checked) {
-      // Enable the 2-second delay to auto-send
-      morseInput.setOnKeyingStoppedCallback(() => {
-        // Only trigger if responseField is focused and has content
-        if (document.activeElement === responseField &amp;&amp; responseField.value.trim() !== '') {
-          sendButton.click();
-        }
-      });
-    } else {
-      // Disable the 2-second delay
-      morseInput.clearOnKeyingStoppedCallback();
-    }
-  });
+  // Note: The old "2s Delay to Send" checkbox has been replaced with the "Auto-Send Delay" slider
+  // The auto-send functionality is now handled in Send Only mode via setupAutoSendCallback()
 
   // Handle "Clear on Send" checkbox - will be checked in send() function
+
+  // Handle difficulty level changes
+  const difficultyLevel = document.getElementById('difficultyLevel');
+
+  function updateUIForDifficultyMode() {
+    const isSendOnly = isSendOnlyMode();
+
+    // Disable/enable buttons based on Send Only mode
+    cqButton.disabled = isSendOnly;
+    sendButton.disabled = isSendOnly;
+    tuButton.disabled = isSendOnly;
+
+    // Disable/enable response field (but keep state fields editable)
+    responseField.disabled = isSendOnly;
+    if (isSendOnly) {
+      responseField.classList.add('text-muted');
+
+      // Initialize yourStation if not already initialized
+      if (!yourStation) {
+        yourStation = getYourStation();
+        yourStation.player = createMorsePlayer(yourStation);
+      }
+
+      // Initialize morse input and set up Send Only handler
+      morseInput.initialize();
+      morseInput.setWordSpacing(true);
+      morseInput.setCustomDecodedLetterHandler(handleSendOnlyCharacter);
+
+      // Reset Send Only state
+      sendOnlyPhase = 'idle';
+      sendOnlyDecodedText = '';
+    } else {
+      responseField.classList.remove('text-muted');
+
+      // Clear Send Only handler if switching away from that mode
+      morseInput.clearCustomDecodedLetterHandler();
+      morseInput.setWordSpacing(false);
+    }
+  }
+
+  // Update UI when difficulty changes
+  if (difficultyLevel) {
+    difficultyLevel.addEventListener('change', updateUIForDifficultyMode);
+
+    // Initialize UI state on load
+    updateUIForDifficultyMode();
+  }
 
   // Local Storage keys for user settings
   const keys = {
@@ -586,6 +629,573 @@ function handleSendPracticeCharacter(letter) {
   }
 
   return true; // We handled it
+}
+
+/**
+ * Handles characters decoded in Send Only mode
+ * @param {string} letter - The decoded letter
+ * @returns {boolean} True if handled
+ */
+function handleSendOnlyCharacter(letter) {
+  console.log('handleSendOnlyCharacter called with:', letter, 'Phase:', sendOnlyPhase);
+
+  if (!isSendOnlyMode()) return false;
+
+  const letterUpper = letter.toUpperCase();
+  sendOnlyDecodedText += letterUpper;
+  console.log('sendOnlyDecodedText:', sendOnlyDecodedText);
+
+  const cqDecodedText = document.getElementById('cqDecodedText');
+  const cqTxText = document.getElementById('cqTxText');
+  const sendDecodedText = document.getElementById('sendDecodedText');
+  const sendTxText = document.getElementById('sendTxText');
+  const tuDecodedText = document.getElementById('tuDecodedText');
+  const tuTxText = document.getElementById('tuTxText');
+  const responseField = document.getElementById('responseField');
+
+  // CQ Phase: Waiting for user to send CQ
+  if (sendOnlyPhase === 'idle' || sendOnlyPhase === 'cq') {
+    if (sendOnlyDecodedText.startsWith('CQ')) {
+      sendOnlyPhase = 'cq';
+
+      // Show white CQ text and green decoded text
+      if (!cqTxText.querySelector('.char')) {
+        const modeConfig = getModeConfig();
+        const cqMsg = modeConfig.cqMessage(yourStation, null, null);
+        prepareTxText(cqTxText, cqMsg);
+        cqTxText.style.display = 'inline-block';
+        console.log('Prepared CQ white text:', cqMsg);
+      }
+      cqDecodedText.textContent = sendOnlyDecodedText;
+      cqDecodedText.style.display = 'inline-block';
+
+      // Check for end signals: &lt;BK>, BK, or standalone K followed by space
+      // Only trigger when we see a SPACE after the K/BK
+      const hasBK = sendOnlyDecodedText.includes('&lt;BK> ') || sendOnlyDecodedText.endsWith('&lt;BK>');
+      const hasWordBK = /\sBK\s/.test(sendOnlyDecodedText);
+      const hasStandaloneK = /\sK\s/.test(sendOnlyDecodedText);
+
+      if (hasBK || hasWordBK || hasStandaloneK) {
+        console.log('Triggering stations to respond');
+        // Trigger stations to respond without playing user's CQ
+        sendOnlyPhase = 'callsign';
+        sendOnlyDecodedText = '';
+
+        // Set up auto-send callback for callsign phase
+        setupAutoSendCallback();
+
+        // Call the station response logic directly instead of full cq()
+        triggerStationResponses();
+        return true;
+      }
+      return true; // We handled this character
+    } else {
+      // In idle phase, not starting with CQ yet - show in decoded text but don't block
+      cqDecodedText.textContent = sendOnlyDecodedText;
+      cqDecodedText.style.display = 'inline-block';
+      return true; // We handled it by displaying
+    }
+  }
+  // Callsign Phase: User sending callsign
+  else if (sendOnlyPhase === 'callsign') {
+    sendDecodedText.textContent = sendOnlyDecodedText;
+    sendDecodedText.style.display = 'inline-block';
+
+    // Check if user sent a question mark (immediate send)
+    if (sendOnlyDecodedText.includes('?')) {
+      console.log('Question mark detected - sending callsign immediately');
+
+      // Remove the question mark
+      let callsign = sendOnlyDecodedText.replace('?', '').trim();
+
+      console.log('Callsign phase: sending callsign:', callsign);
+
+      // Put callsign in response field and trigger send logic
+      responseField.value = callsign;
+      sendOnlyDecodedText = '';
+
+      // Clear the auto-send callback since we're sending immediately
+      morseInput.clearOnKeyingStoppedCallback();
+
+      // Trigger the send/matching logic
+      triggerSendOnlyCallsignMatch();
+      return true;
+    }
+
+    // If no question mark, the auto-send callback will trigger after pause
+    return true; // We handled it
+  }
+  // Exchange Phase: User sending exchange info
+  else if (sendOnlyPhase === 'exchange') {
+    sendDecodedText.textContent = sendOnlyDecodedText;
+    sendDecodedText.style.display = 'inline-block';
+
+    // Check for end signals: &lt;BK>, BK, or standalone K followed by space
+    const hasBK = sendOnlyDecodedText.includes('&lt;BK> ') || sendOnlyDecodedText.endsWith('&lt;BK>');
+    const hasWordBK = /\sBK\s/.test(sendOnlyDecodedText);
+    const hasStandaloneK = /\sK\s/.test(sendOnlyDecodedText);
+
+    // Or check for question mark (immediate send)
+    const hasQuestionMark = sendOnlyDecodedText.includes('?');
+
+    if (hasBK || hasWordBK || hasStandaloneK || hasQuestionMark) {
+      console.log('Exchange complete - triggering station response');
+
+      // Remove question mark if present
+      let exchange = sendOnlyDecodedText.replace('?', '').trim();
+
+      // Clear auto-send callback
+      morseInput.clearOnKeyingStoppedCallback();
+
+      // Trigger the TU response from station
+      triggerSendOnlyExchangeResponse(exchange);
+      return true;
+    }
+
+    return true; // We handled it
+  }
+  // TU Phase: User sending TU message with state validation
+  else if (sendOnlyPhase === 'tu') {
+    tuDecodedText.textContent = sendOnlyDecodedText;
+    tuDecodedText.style.display = 'inline-block';
+
+    // Validate state letters as user types
+    validateTuStateLetters(tuTxText, sendOnlyDecodedText, sendOnlyExpectedState);
+
+    // Check for "E E" to complete the contact
+    if (sendOnlyDecodedText.includes('E E') &amp;&amp; sendOnlyPhase === 'tu') {
+      console.log('E E detected - contact complete!');
+
+      // Immediately set phase to 'completing' to prevent duplicate triggers
+      sendOnlyPhase = 'completing';
+
+      // Clear callbacks
+      morseInput.clearOnKeyingStoppedCallback();
+
+      // Complete the contact
+      completeSendOnlyContact();
+      return true;
+    }
+
+    return true; // We handled it
+  }
+
+  return false; // Not in Send Only mode or unhandled phase
+}
+
+/**
+ * Gets the current auto-send delay from the slider.
+ * @returns {number} Delay in milliseconds
+ */
+function getAutoSendDelay() {
+  const autoSendDelaySlider = document.getElementById('autoSendDelay');
+  const delaySeconds = autoSendDelaySlider ? parseFloat(autoSendDelaySlider.value) : 1.0;
+  return delaySeconds * 1000;
+}
+
+/**
+ * Sets up auto-send callback based on the configurable delay slider.
+ * Triggers send when user stops keying for the specified duration.
+ */
+function setupAutoSendCallback() {
+  console.log(`Setting up auto-send callback`);
+
+  // Set up the keying stopped callback with a function that reads delay dynamically
+  morseInput.setOnKeyingStoppedCallback(() => {
+    console.log('Keying stopped - auto-sending');
+    handleAutoSend();
+  }, getAutoSendDelay);
+}
+
+/**
+ * Handles auto-send when user stops keying.
+ * Triggers the appropriate action based on current phase.
+ */
+function handleAutoSend() {
+  if (sendOnlyPhase === 'callsign') {
+    console.log('Auto-send in callsign phase:', sendOnlyDecodedText);
+
+    // Put callsign in response field and trigger send logic
+    const responseField = document.getElementById('responseField');
+    responseField.value = sendOnlyDecodedText.trim();
+    sendOnlyDecodedText = '';
+
+    // Trigger the send/matching logic
+    triggerSendOnlyCallsignMatch();
+  } else if (sendOnlyPhase === 'exchange') {
+    console.log('Auto-send in exchange phase:', sendOnlyDecodedText);
+
+    // Trigger the exchange response from station
+    const exchange = sendOnlyDecodedText.trim();
+    sendOnlyDecodedText = '';
+
+    triggerSendOnlyExchangeResponse(exchange);
+  } else if (sendOnlyPhase === 'tu') {
+    console.log('Auto-send in TU phase:', sendOnlyDecodedText);
+    // TODO: Implement TU auto-send
+  }
+}
+
+/**
+ * Triggers station responses without playing the user's CQ message.
+ * Used in Send Only mode after user manually sends their CQ.
+ */
+function triggerStationResponses() {
+  const modeConfig = getModeConfig();
+
+  // Get inputs (needed for addStations)
+  inputs = getInputs();
+  if (inputs === null) return;
+
+  // Initialize timing and attempt tracking for Send Only mode
+  currentStationStartTime = audioContext.currentTime;
+  currentStationAttempts = 0;
+
+  let backgroundStaticDelay = 0;
+  if (!isBackgroundStaticPlaying()) {
+    createBackgroundStatic();
+    backgroundStaticDelay = 2;
+  }
+
+  const yourResponseTimer = audioContext.currentTime + backgroundStaticDelay;
+
+  if (modeConfig.showTuStep) {
+    // Contest-like modes: CQ adds more stations
+    addStations(currentStations, inputs);
+    respondWithAllStations(currentStations, yourResponseTimer);
+    lastRespondingStations = currentStations;
+  } else {
+    // Single mode: Just get one station
+    const cqButton = document.getElementById('cqButton');
+    cqButton.disabled = true;
+    nextSingleStation(yourResponseTimer);
+  }
+}
+
+/**
+ * Triggers callsign matching logic for Send Only mode.
+ * Matches the user's keyed callsign against active stations.
+ */
+function triggerSendOnlyCallsignMatch() {
+  const modeConfig = getModeConfig();
+  const responseField = document.getElementById('responseField');
+  const sendTxText = document.getElementById('sendTxText');
+
+  let responseFieldText = responseField.value.trim().toUpperCase();
+
+  console.log('Matching callsign:', responseFieldText);
+
+  // Prepare white text display
+  prepareTxText(sendTxText, responseFieldText);
+  sendTxText.style.display = 'inline-block';
+
+  if (modeConfig.showTuStep) {
+    // Multi-station scenario
+    if (currentStations.length === 0) {
+      console.log('No stations to match');
+      return;
+    }
+
+    // Check for match type
+    let results = currentStations.map((stn) =>
+      compareStrings(stn.callsign, responseFieldText.replace('?', ''))
+    );
+    let hasQuestionMark = responseFieldText.includes('?');
+    let isPerfectMatch = results.includes('perfect') &amp;&amp; !hasQuestionMark;
+
+    console.log('Match results:', results, 'Perfect:', isPerfectMatch);
+
+    const yourResponseTimer = audioContext.currentTime;
+
+    if (isPerfectMatch) {
+      // Perfect match - station sends "R R" and exchange
+      console.log('Perfect match! Moving to exchange phase');
+
+      const matchIndex = results.indexOf('perfect');
+      const matchedStation = currentStations[matchIndex];
+
+      // Get yourStation first to ensure we have current field values
+      const currentYourStation = getYourStation();
+      if (!currentYourStation) {
+        console.error('Failed to get yourStation for exchange');
+        return;
+      }
+
+      // Play "R R" acknowledgment
+      const rrResponseTimer = matchedStation.player.playSentence(
+        'R R',
+        yourResponseTimer + 0.25
+      );
+      updateAudioLock(rrResponseTimer);
+
+      // Prepare white exchange text for user to send
+      const modeConfig = getModeConfig();
+      const yourExchange = modeConfig.yourExchange(currentYourStation, matchedStation, null);
+      prepareTxText(sendTxText, yourExchange);
+      sendTxText.style.display = 'inline-block';
+
+      console.log('Prepared exchange white text:', yourExchange);
+
+      // Move to exchange phase
+      sendOnlyPhase = 'exchange';
+      sendOnlyDecodedText = '';
+      activeStationIndex = matchIndex;
+      readyForTU = true;
+
+      // Clear any existing auto-send callback - exchange phase uses &lt;BK> detection instead
+      morseInput.clearOnKeyingStoppedCallback();
+
+      console.log('Now waiting for user to send exchange with &lt;BK>');
+    } else if (results.includes('partial')) {
+      // Partial match - stations repeat their callsigns
+      console.log('Partial match - stations repeating callsigns');
+
+      let partialMatchStations = currentStations.filter(
+        (_, index) => results[index] === 'partial'
+      );
+      respondWithAllStations(partialMatchStations, yourResponseTimer);
+      lastRespondingStations = partialMatchStations;
+      currentStationAttempts++;
+    } else {
+      // No match
+      console.log('No match found');
+      currentStationAttempts++;
+    }
+  } else {
+    // Single station mode - implement if needed
+    console.log('Single station mode not yet implemented for Send Only');
+  }
+}
+
+/**
+ * Triggers station TU response after user sends exchange in Send Only mode.
+ * Station sends acknowledgment and displays TU white text for user to respond.
+ * @param {string} userExchange - The exchange the user sent
+ */
+function triggerSendOnlyExchangeResponse(userExchange) {
+  const modeConfig = getModeConfig();
+  const tuTxText = document.getElementById('tuTxText');
+  const sendTxText = document.getElementById('sendTxText');
+
+  console.log('User sent exchange:', userExchange);
+
+  if (activeStationIndex === null || activeStationIndex === undefined) {
+    console.log('No active station for exchange');
+    return;
+  }
+
+  const matchedStation = currentStations[activeStationIndex];
+  const yourResponseTimer = audioContext.currentTime;
+
+  // Get yourStation for exchange generation
+  const currentYourStation = getYourStation();
+  if (!currentYourStation) {
+    console.error('Failed to get yourStation for exchange response');
+    return;
+  }
+
+  // Station sends their exchange (e.g., "&lt;BK> UR 5NN MO MO &lt;BK>")
+  const theirExchange = modeConfig.theirExchange(currentYourStation, matchedStation, null);
+  const exchangeResponseTimer = matchedStation.player.playSentence(
+    theirExchange,
+    yourResponseTimer + 0.25
+  );
+  updateAudioLock(exchangeResponseTimer);
+
+  console.log('Station sending their exchange:', theirExchange);
+
+  // Station sends TU acknowledgment after their exchange
+  const tuMessage = 'TU';
+  const tuResponseTimer = matchedStation.player.playSentence(
+    tuMessage,
+    exchangeResponseTimer + 0.5
+  );
+  updateAudioLock(tuResponseTimer);
+
+  console.log('Station sent TU');
+
+  // Store the station's state for validation (they sent it in their exchange)
+  sendOnlyExpectedState = matchedStation.state ? matchedStation.state.toUpperCase() : '';
+
+  // Prepare white TU text for user to send
+  // Format: &lt;BK> TU ?? ?? 73 E E
+  // User must fill in the state they heard from the station
+  const tuWhiteText = `&lt;BK> TU ?? ?? 73 E E`;
+  prepareTxText(tuTxText, tuWhiteText);
+  tuTxText.style.display = 'inline-block';
+
+  // Clear the white exchange text now that we're moving to TU
+  sendTxText.style.display = 'none';
+
+  console.log('Prepared TU white text:', tuWhiteText);
+
+  // Move to TU phase
+  sendOnlyPhase = 'tu';
+  sendOnlyDecodedText = '';
+
+  // Clear auto-send callback for TU phase - it ends on E E detection
+  morseInput.clearOnKeyingStoppedCallback();
+}
+
+/**
+ * Validates state letters in the TU message as user types.
+ * Colors state letters green if correct, red if incorrect.
+ * @param {HTMLElement} tuTxText - The white text display element
+ * @param {string} decodedText - The text user has typed so far
+ * @param {string} expectedState - The expected state letters (e.g., "PA")
+ */
+function validateTuStateLetters(tuTxText, decodedText, expectedState) {
+  if (!expectedState) return;
+
+  // Parse the decoded text to find state letter positions
+  // The format is: &lt;BK> TU {state} {state} 73 E E
+  // We need to check if the user typed the correct state letters
+
+  const expectedPattern = `&lt;BK> TU ${expectedState} ${expectedState}`;
+
+  // Find where we are in the expected pattern
+  let matchIndex = 0;
+  for (let i = 0; i &lt; decodedText.length &amp;&amp; matchIndex &lt; expectedPattern.length; i++) {
+    const expectedChar = expectedPattern[matchIndex];
+    const actualChar = decodedText[i];
+
+    // Find the corresponding char span in the white text
+    const charSpans = tuTxText.querySelectorAll('.char');
+    if (matchIndex &lt; charSpans.length) {
+      if (actualChar === expectedChar) {
+        // Correct character - mark green
+        markCharCorrect(tuTxText, matchIndex);
+      } else {
+        // Incorrect character - mark red
+        markCharIncorrect(tuTxText, matchIndex);
+      }
+    }
+    matchIndex++;
+  }
+}
+
+/**
+ * Completes the Send Only contact after user sends "E E".
+ * Plays station's final "E E" response, logs the contact, and resets to idle phase.
+ */
+function completeSendOnlyContact() {
+  console.log('Contact completed successfully!');
+
+  // Validate the state the user sent
+  const tuDecodedText = document.getElementById('tuDecodedText');
+  const userSentText = tuDecodedText ? tuDecodedText.textContent : sendOnlyDecodedText;
+  
+  // Check if the expected state appears in what the user sent
+  // Remove spaces and check if state letters are present
+  const userTextNoSpaces = userSentText.replace(/\s/g, '');
+  const expectedStateNoSpaces = sendOnlyExpectedState.replace(/\s/g, '');
+  const stateCorrect = userTextNoSpaces.includes(expectedStateNoSpaces);
+
+  console.log('State validation:', {
+    expected: sendOnlyExpectedState,
+    userSent: userSentText,
+    correct: stateCorrect
+  });
+
+  // Declare signoffEndTime with default value
+  let signoffEndTime = audioContext.currentTime + 1; // Default 1 second if no station
+
+  // Get the matched station for logging and final response
+  if (activeStationIndex !== null &amp;&amp; activeStationIndex !== undefined &amp;&amp; currentStations[activeStationIndex]) {
+    const matchedStation = currentStations[activeStationIndex];
+    const modeConfig = getModeConfig();
+
+    // Play station's final "E E" response
+    const theirSignoff = modeConfig.theirSignoff
+      ? modeConfig.theirSignoff(getYourStation(), matchedStation, null)
+      : 'EE';
+
+    console.log(`Station sending final signoff: ${theirSignoff}`);
+
+    // Play the signoff immediately
+    if (!matchedStation.player) {
+      matchedStation.player = createMorsePlayer(matchedStation);
+    }
+    signoffEndTime = matchedStation.player.playSentence(theirSignoff, audioContext.currentTime);
+    updateAudioLock(signoffEndTime);
+    
+    console.log(`Signoff will end at: ${signoffEndTime}, current time: ${audioContext.currentTime}`);
+    
+    // Increment total contacts
+    totalContacts++;
+
+    // Build WPM string
+    const wpmString = `${matchedStation.wpm}${
+      matchedStation.enableFarnsworth ? ` / ${matchedStation.farnsworthSpeed}` : ''
+    }`;
+
+    // Build extra info with state validation result
+    const stateInfo = stateCorrect 
+      ? `${sendOnlyExpectedState} ✓` 
+      : `${sendOnlyExpectedState} ✗`;
+
+    // Add to results table
+    addTableRow(
+      'resultsTable',
+      totalContacts,
+      matchedStation.callsign,
+      wpmString,
+      currentStationAttempts,
+      audioContext.currentTime - currentStationStartTime,
+      stateInfo
+    );
+
+    console.log(`Contact logged: ${matchedStation.callsign} - State: ${stateInfo}`);
+  }
+
+  // Calculate delay to wait for signoff to finish playing
+  const currentTime = audioContext.currentTime;
+  const delayMs = Math.max(0, (signoffEndTime - currentTime) * 1000) + 500; // Add 500ms buffer
+  
+  console.log(`Waiting ${delayMs}ms for signoff to complete`);
+  
+  // Reset to idle phase after signoff completes
+  setTimeout(() => {
+    sendOnlyPhase = 'idle';
+    sendOnlyDecodedText = '';
+    sendOnlyExpectedState = '';
+    activeStationIndex = null;
+
+    // Clear all displays
+  const cqDecodedText = document.getElementById('cqDecodedText');
+  const cqTxText = document.getElementById('cqTxText');
+  const sendDecodedText = document.getElementById('sendDecodedText');
+  const sendTxText = document.getElementById('sendTxText');
+  const tuDecodedTextElement = document.getElementById('tuDecodedText');
+  const tuTxText = document.getElementById('tuTxText');
+
+  if (cqDecodedText) {
+    cqDecodedText.textContent = '';
+    cqDecodedText.style.display = 'none';
+  }
+  if (cqTxText) {
+    cqTxText.innerHTML = '';
+    cqTxText.style.display = 'none';
+  }
+  if (sendDecodedText) {
+    sendDecodedText.textContent = '';
+    sendDecodedText.style.display = 'none';
+  }
+  if (sendTxText) {
+    sendTxText.innerHTML = '';
+    sendTxText.style.display = 'none';
+  }
+  if (tuDecodedTextElement) {
+    tuDecodedTextElement.textContent = '';
+    tuDecodedTextElement.style.display = 'none';
+  }
+  if (tuTxText) {
+    tuTxText.innerHTML = '';
+    tuTxText.style.display = 'none';
+  }
+
+    console.log('Ready for next CQ');
+  }, delayMs);
 }
 
 /**
@@ -1440,13 +2050,13 @@ function reset() {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MorseInput.html">MorseInput</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addStations">addStations</a></li><li><a href="global.html#addTableRow">addTableRow</a></li><li><a href="global.html#applyModeSettings">applyModeSettings</a></li><li><a href="global.html#changeMode">changeMode</a></li><li><a href="global.html#clearAllInvalidStates">clearAllInvalidStates</a></li><li><a href="global.html#clearFieldInvalid">clearFieldInvalid</a></li><li><a href="global.html#clearHighlights">clearHighlights</a></li><li><a href="global.html#clearTable">clearTable</a></li><li><a href="global.html#compareExtraInfo">compareExtraInfo</a></li><li><a href="global.html#compareStrings">compareStrings</a></li><li><a href="global.html#cq">cq</a></li><li><a href="global.html#createBackgroundStatic">createBackgroundStatic</a></li><li><a href="global.html#createHighlightCallback">createHighlightCallback</a></li><li><a href="global.html#createMorsePlayer">createMorsePlayer</a></li><li><a href="global.html#currentMode">currentMode</a></li><li><a href="global.html#generateRandomLetters">generateRandomLetters</a></li><li><a href="global.html#getAudioLock">getAudioLock</a></li><li><a href="global.html#getCallingStation">getCallingStation</a></li><li><a href="global.html#getCurrentProgressIndex">getCurrentProgressIndex</a></li><li><a href="global.html#getDOMInputs">getDOMInputs</a></li><li><a href="global.html#getDifficultyLevel">getDifficultyLevel</a></li><li><a href="global.html#getExpectedText">getExpectedText</a></li><li><a href="global.html#getInputs">getInputs</a></li><li><a href="global.html#getModeConfig">getModeConfig</a></li><li><a href="global.html#getRandomNonUSCallsign">getRandomNonUSCallsign</a></li><li><a href="global.html#getRandomUSCallsign">getRandomUSCallsign</a></li><li><a href="global.html#getSelectedCutNumbers">getSelectedCutNumbers</a></li><li><a href="global.html#getSelectedFormats">getSelectedFormats</a></li><li><a href="global.html#getYourStation">getYourStation</a></li><li><a href="global.html#handleSendPracticeCharacter">handleSendPracticeCharacter</a></li><li><a href="global.html#highlightChar">highlightChar</a></li><li><a href="global.html#isBackgroundStaticPlaying">isBackgroundStaticPlaying</a></li><li><a href="global.html#isSendPracticeMode">isSendPracticeMode</a></li><li><a href="global.html#markCharCorrect">markCharCorrect</a></li><li><a href="global.html#markCharIncorrect">markCharIncorrect</a></li><li><a href="global.html#markFieldInvalid">markFieldInvalid</a></li><li><a href="global.html#modeLogicConfig">modeLogicConfig</a></li><li><a href="global.html#modeUIConfig">modeUIConfig</a></li><li><a href="global.html#nextSingleStation">nextSingleStation</a></li><li><a href="global.html#normalizeStationGain">normalizeStationGain</a></li><li><a href="global.html#openAccordionSection">openAccordionSection</a></li><li><a href="global.html#prepareTxText">prepareTxText</a></li><li><a href="global.html#printStation">printStation</a></li><li><a href="global.html#randomDigit">randomDigit</a></li><li><a href="global.html#randomElement">randomElement</a></li><li><a href="global.html#reset">reset</a></li><li><a href="global.html#resetGameState">resetGameState</a></li><li><a href="global.html#respondWithAllStations">respondWithAllStations</a></li><li><a href="global.html#send">send</a></li><li><a href="global.html#shouldDisplayTxText">shouldDisplayTxText</a></li><li><a href="global.html#stop">stop</a></li><li><a href="global.html#stopAllAudio">stopAllAudio</a></li><li><a href="global.html#stopBackgroundStatic">stopBackgroundStatic</a></li><li><a href="global.html#tokenizeForDisplay">tokenizeForDisplay</a></li><li><a href="global.html#tu">tu</a></li><li><a href="global.html#updateActiveStations">updateActiveStations</a></li><li><a href="global.html#updateAudioLock">updateAudioLock</a></li><li><a href="global.html#updateStaticIntensity">updateStaticIntensity</a></li><li><a href="global.html#updateSummaryRow">updateSummaryRow</a></li><li><a href="global.html#validateInputs">validateInputs</a></li><li><a href="global.html#weightedRandom">weightedRandom</a></li><li><a href="global.html#weightedRandomElement">weightedRandomElement</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MorseInput.html">MorseInput</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addStations">addStations</a></li><li><a href="global.html#addTableRow">addTableRow</a></li><li><a href="global.html#applyModeSettings">applyModeSettings</a></li><li><a href="global.html#changeMode">changeMode</a></li><li><a href="global.html#clearAllInvalidStates">clearAllInvalidStates</a></li><li><a href="global.html#clearFieldInvalid">clearFieldInvalid</a></li><li><a href="global.html#clearHighlights">clearHighlights</a></li><li><a href="global.html#clearTable">clearTable</a></li><li><a href="global.html#compareExtraInfo">compareExtraInfo</a></li><li><a href="global.html#compareStrings">compareStrings</a></li><li><a href="global.html#completeSendOnlyContact">completeSendOnlyContact</a></li><li><a href="global.html#cq">cq</a></li><li><a href="global.html#createBackgroundStatic">createBackgroundStatic</a></li><li><a href="global.html#createHighlightCallback">createHighlightCallback</a></li><li><a href="global.html#createMorsePlayer">createMorsePlayer</a></li><li><a href="global.html#currentMode">currentMode</a></li><li><a href="global.html#generateRandomLetters">generateRandomLetters</a></li><li><a href="global.html#getAudioLock">getAudioLock</a></li><li><a href="global.html#getAutoSendDelay">getAutoSendDelay</a></li><li><a href="global.html#getCallingStation">getCallingStation</a></li><li><a href="global.html#getCurrentProgressIndex">getCurrentProgressIndex</a></li><li><a href="global.html#getDOMInputs">getDOMInputs</a></li><li><a href="global.html#getDifficultyLevel">getDifficultyLevel</a></li><li><a href="global.html#getExpectedText">getExpectedText</a></li><li><a href="global.html#getInputs">getInputs</a></li><li><a href="global.html#getModeConfig">getModeConfig</a></li><li><a href="global.html#getRandomNonUSCallsign">getRandomNonUSCallsign</a></li><li><a href="global.html#getRandomUSCallsign">getRandomUSCallsign</a></li><li><a href="global.html#getSelectedCutNumbers">getSelectedCutNumbers</a></li><li><a href="global.html#getSelectedFormats">getSelectedFormats</a></li><li><a href="global.html#getYourStation">getYourStation</a></li><li><a href="global.html#handleAutoSend">handleAutoSend</a></li><li><a href="global.html#handleSendOnlyCharacter">handleSendOnlyCharacter</a></li><li><a href="global.html#handleSendPracticeCharacter">handleSendPracticeCharacter</a></li><li><a href="global.html#highlightChar">highlightChar</a></li><li><a href="global.html#isBackgroundStaticPlaying">isBackgroundStaticPlaying</a></li><li><a href="global.html#isSendOnlyMode">isSendOnlyMode</a></li><li><a href="global.html#isSendPracticeMode">isSendPracticeMode</a></li><li><a href="global.html#markCharCorrect">markCharCorrect</a></li><li><a href="global.html#markCharIncorrect">markCharIncorrect</a></li><li><a href="global.html#markFieldInvalid">markFieldInvalid</a></li><li><a href="global.html#modeLogicConfig">modeLogicConfig</a></li><li><a href="global.html#modeUIConfig">modeUIConfig</a></li><li><a href="global.html#nextSingleStation">nextSingleStation</a></li><li><a href="global.html#normalizeStationGain">normalizeStationGain</a></li><li><a href="global.html#openAccordionSection">openAccordionSection</a></li><li><a href="global.html#prepareTxText">prepareTxText</a></li><li><a href="global.html#printStation">printStation</a></li><li><a href="global.html#randomDigit">randomDigit</a></li><li><a href="global.html#randomElement">randomElement</a></li><li><a href="global.html#reset">reset</a></li><li><a href="global.html#resetGameState">resetGameState</a></li><li><a href="global.html#respondWithAllStations">respondWithAllStations</a></li><li><a href="global.html#send">send</a></li><li><a href="global.html#setupAutoSendCallback">setupAutoSendCallback</a></li><li><a href="global.html#shouldDisplayTxText">shouldDisplayTxText</a></li><li><a href="global.html#stop">stop</a></li><li><a href="global.html#stopAllAudio">stopAllAudio</a></li><li><a href="global.html#stopBackgroundStatic">stopBackgroundStatic</a></li><li><a href="global.html#tokenizeForDisplay">tokenizeForDisplay</a></li><li><a href="global.html#triggerSendOnlyCallsignMatch">triggerSendOnlyCallsignMatch</a></li><li><a href="global.html#triggerSendOnlyExchangeResponse">triggerSendOnlyExchangeResponse</a></li><li><a href="global.html#triggerStationResponses">triggerStationResponses</a></li><li><a href="global.html#tu">tu</a></li><li><a href="global.html#updateActiveStations">updateActiveStations</a></li><li><a href="global.html#updateAudioLock">updateAudioLock</a></li><li><a href="global.html#updateStaticIntensity">updateStaticIntensity</a></li><li><a href="global.html#updateSummaryRow">updateSummaryRow</a></li><li><a href="global.html#validateInputs">validateInputs</a></li><li><a href="global.html#validateTuStateLetters">validateTuStateLetters</a></li><li><a href="global.html#weightedRandom">weightedRandom</a></li><li><a href="global.html#weightedRandomElement">weightedRandomElement</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Tue Dec 02 2025 01:15:17 GMT-0500 (Eastern Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Dec 11 2025 21:40:10 GMT-0500 (Eastern Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

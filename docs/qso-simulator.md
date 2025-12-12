@@ -10,6 +10,57 @@ A sophisticated pileup training simulator for practicing contest-style and field
 4. **CW Ops Test (CWT)** - Practice CWT-style exchanges
 5. **K1USN SST** - Simulate SST contest format
 
+## Difficulty Levels
+Each mode supports three difficulty levels:
+
+1. **Receive Only** - Station sends complete exchange, you just listen and copy
+   - Practice receiving exchanges at various speeds
+   - Focus on copying callsigns and exchange information
+   - No sending required
+
+2. **Receive & Send** - Traditional pileup training (default mode)
+   - Send callsigns to respond to callers
+   - Send your exchange when requested
+   - Station responds with their information
+   - Practice both sending and receiving
+
+3. **Send Only** - YOU initiate the contact, station responds
+   - YOU send CQ to call stations
+   - Multiple stations may respond to your CQ
+   - YOU send their callsign when you pick one from the pileup
+   - Station sends "R R" on perfect match, otherwise repeats callsign
+   - YOU send your exchange (mode-dependent format)
+   - Station sends their exchange after detecting your `<BK>`
+   - YOU send TU with their information (e.g., `<BK> TU VT VT 73 E E`)
+   - Station validates your copy and sends final "E E" confirmation
+   - Contact logged with state validation (✓ correct, ✗ incorrect)
+   - System resets for next CQ automatically
+
+## POTA Mode Send Only Workflow
+
+Complete workflow for POTA (Parks on the Air) Send Only difficulty:
+
+1. **Call CQ** - YOU send: `CQ CQ POTA [YOUR_CALL] [YOUR_CALL] K`
+2. **Stations Respond** - Multiple stations may respond with their callsigns
+3. **Send Callsign** - YOU pick one and send their callsign
+4. **Station Confirms** - Station sends `R R` on perfect match, otherwise repeats callsign
+5. **Your Exchange** - White text shows: `TU UR 5NN 5NN MD MD <BK>` (with your state)
+   - YOU send this exchange with your state repeated twice
+6. **Station Exchange** - Station sends: `<BK> UR 5NN VT VT <BK>` (with their state)
+7. **TU Message** - White text shows: `<BK> TU ?? ?? 73 E E` (question marks are placeholders)
+   - YOU copy the state you heard (e.g., VT) and send: `<BK> TU VT VT 73 E E`
+8. **Final Confirmation** - Station sends: `E E`
+9. **Contact Logged** - System validates your state copy:
+   - ✓ = Correct (state matches what station sent)
+   - ✗ = Incorrect (state doesn't match)
+10. **System Reset** - After ~500ms delay, returns to idle for next CQ
+
+### State Validation Details
+- System compares the state you sent with what the station actually sent
+- Spaces are ignored in comparison (so "VTVT", "VT VT", or "V T V T" all work)
+- Contact is logged regardless of whether state was correct
+- Results table shows the expected state with validation indicator
+
 ## USB CW Key Support
 
 ### Real-time Morse Input

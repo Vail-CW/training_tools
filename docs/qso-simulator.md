@@ -73,10 +73,12 @@ Use keyboard or USB CW keys to send morse code in the simulator.
 - **`]` key** = Dah (backup for USB interfaces)
 
 ### Multiple Keyer Modes
-- **Mode 1: Straight Key** - Direct on/off control
+- **Mode 1: Straight Key** (default) - Direct on/off control, best for beginners
 - **Mode 2: Iambic A** - Automatic alternation between dit and dah
 - **Mode 3: Iambic B** - Enhanced with queue retention for smoother keying
 - **Mode 4: Ultimatic** - Lever-priority keying mode
+
+**Note:** The default mode is Straight Key (Mode 1), which provides the simplest behavior - what you press is exactly what you get, with no automatic keying features.
 
 ### Real-time Decoder
 - Automatically converts dit/dah timing into characters

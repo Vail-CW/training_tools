@@ -84,8 +84,8 @@ export const modeLogicConfig = {
   },
   pota: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ POTA DE ${yourStation.callsign}`,
-    yourExchange: (yourStation, theirStation, arbitrary) => `UR 5NN <BK>`,
+      `CQ CQ POTA DE ${yourStation.callsign} K`,
+    yourExchange: (yourStation, theirStation, arbitrary) => `TU UR 5NN 5NN ${yourStation.state} ${yourStation.state} <BK>`,
     theirExchange: (yourStation, theirStation, arbitrary) =>
       `<BK> UR 5NN ${theirStation.state} ${theirStation.state} <BK>`,
     yourSignoff: (yourStation, theirStation, arbitrary) =>
@@ -100,7 +100,7 @@ export const modeLogicConfig = {
   },
   contest: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ TEST DE ${yourStation.callsign}`,
+      `CQ TEST DE ${yourStation.callsign} K`,
     yourExchange: (yourStation, theirStation, arbitrary) => `5NN`,
     theirExchange: (yourStation, theirStation, arbitrary) =>
       `5NN ${theirStation.serialNumber} TU`,
@@ -116,7 +116,7 @@ export const modeLogicConfig = {
   },
   sst: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ SST ${yourStation.callsign}`,
+      `CQ SST ${yourStation.callsign} K`,
     yourExchange: (yourStation, theirStation, arbitrary) =>
       `${yourStation.name} ${yourStation.state}`,
     theirExchange: (yourStation, theirStation, arbitrary) =>
@@ -133,7 +133,7 @@ export const modeLogicConfig = {
   },
   cwt: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ CWT ${yourStation.callsign}`,
+      `CQ CWT ${yourStation.callsign} K`,
     yourExchange: (yourStation, theirStation, arbitrary) =>
       `${yourStation.name} CWA`,
     theirExchange: (yourStation, theirStation, arbitrary) =>

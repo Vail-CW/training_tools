@@ -20,7 +20,7 @@ export function getDifficultyLevel() {
  */
 export function shouldDisplayTxText() {
   const level = getDifficultyLevel();
-  return level === 'display-tx-text' || level === 'send-practice';
+  return level === 'display-tx-text' || level === 'send-practice' || level === 'send-only';
 }
 
 /**
@@ -29,6 +29,14 @@ export function shouldDisplayTxText() {
  */
 export function isSendPracticeMode() {
   return getDifficultyLevel() === 'send-practice';
+}
+
+/**
+ * Checks if we're in send only mode
+ * @returns {boolean} True if in send only mode
+ */
+export function isSendOnlyMode() {
+  return getDifficultyLevel() === 'send-only';
 }
 
 /**

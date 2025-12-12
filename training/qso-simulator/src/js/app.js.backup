@@ -735,11 +735,8 @@ function handleSendOnlyCharacter(letter) {
     validateTuStateLetters(tuTxText, sendOnlyDecodedText, sendOnlyExpectedState);
 
     // Check for "E E" to complete the contact
-    if (sendOnlyDecodedText.includes('E E') && sendOnlyPhase === 'tu') {
+    if (sendOnlyDecodedText.includes('E E')) {
       console.log('E E detected - contact complete!');
-
-      // Immediately set phase to 'completing' to prevent duplicate triggers
-      sendOnlyPhase = 'completing';
 
       // Clear callbacks
       morseInput.clearOnKeyingStoppedCallback();
@@ -819,10 +816,6 @@ function triggerStationResponses() {
   inputs = getInputs();
   if (inputs === null) return;
 
-  // Initialize timing and attempt tracking for Send Only mode
-  currentStationStartTime = audioContext.currentTime;
-  currentStationAttempts = 0;
-
   let backgroundStaticDelay = 0;
   if (!isBackgroundStaticPlaying()) {
     createBackgroundStatic();
@@ -886,13 +879,6 @@ function triggerSendOnlyCallsignMatch() {
       const matchIndex = results.indexOf('perfect');
       const matchedStation = currentStations[matchIndex];
 
-      // Get yourStation first to ensure we have current field values
-      const currentYourStation = getYourStation();
-      if (!currentYourStation) {
-        console.error('Failed to get yourStation for exchange');
-        return;
-      }
-
       // Play "R R" acknowledgment
       const rrResponseTimer = matchedStation.player.playSentence(
         'R R',
@@ -900,8 +886,25 @@ function triggerSendOnlyCallsignMatch() {
       );
       updateAudioLock(rrResponseTimer);
 
-      // Prepare white exchange text for user to send
+      // Get the exchange info
       const modeConfig = getModeConfig();
+      const theirExchange = modeConfig.theirExchange(matchedStation);
+
+      // Play their exchange
+      const theirResponseTimer = matchedStation.player.playSentence(
+        theirExchange,
+        rrResponseTimer + 0.5
+      );
+      updateAudioLock(theirResponseTimer);
+
+      // Prepare white exchange text for user to send
+      // Re-fetch yourStation to ensure we have current field values
+      const currentYourStation = getYourStation();
+      if (!currentYourStation) {
+        console.error('Failed to get yourStation for exchange');
+        return;
+      }
+
       const yourExchange = modeConfig.yourExchange(currentYourStation, matchedStation, null);
       prepareTxText(sendTxText, yourExchange);
       sendTxText.style.display = 'inline-block';
@@ -914,10 +917,10 @@ function triggerSendOnlyCallsignMatch() {
       activeStationIndex = matchIndex;
       readyForTU = true;
 
-      // Clear any existing auto-send callback - exchange phase uses <BK> detection instead
-      morseInput.clearOnKeyingStoppedCallback();
+      // Set up auto-send callback for exchange phase
+      setupAutoSendCallback();
 
-      console.log('Now waiting for user to send exchange with <BK>');
+      console.log('Station will send exchange:', theirExchange);
     } else if (results.includes('partial')) {
       // Partial match - stations repeat their callsigns
       console.log('Partial match - stations repeating callsigns');
@@ -959,40 +962,23 @@ function triggerSendOnlyExchangeResponse(userExchange) {
   const matchedStation = currentStations[activeStationIndex];
   const yourResponseTimer = audioContext.currentTime;
 
-  // Get yourStation for exchange generation
-  const currentYourStation = getYourStation();
-  if (!currentYourStation) {
-    console.error('Failed to get yourStation for exchange response');
-    return;
-  }
-
-  // Station sends their exchange (e.g., "<BK> UR 5NN MO MO <BK>")
-  const theirExchange = modeConfig.theirExchange(currentYourStation, matchedStation, null);
-  const exchangeResponseTimer = matchedStation.player.playSentence(
-    theirExchange,
-    yourResponseTimer + 0.25
-  );
-  updateAudioLock(exchangeResponseTimer);
-
-  console.log('Station sending their exchange:', theirExchange);
-
-  // Station sends TU acknowledgment after their exchange
+  // Station sends TU acknowledgment
   const tuMessage = 'TU';
   const tuResponseTimer = matchedStation.player.playSentence(
     tuMessage,
-    exchangeResponseTimer + 0.5
+    yourResponseTimer + 0.25
   );
   updateAudioLock(tuResponseTimer);
 
   console.log('Station sent TU');
 
-  // Store the station's state for validation (they sent it in their exchange)
-  sendOnlyExpectedState = matchedStation.state ? matchedStation.state.toUpperCase() : '';
+  // Get the expected state from user's station
+  const stateField = document.getElementById('stateField');
+  sendOnlyExpectedState = stateField ? stateField.value.trim().toUpperCase() : '';
 
   // Prepare white TU text for user to send
-  // Format: <BK> TU ?? ?? 73 E E
-  // User must fill in the state they heard from the station
-  const tuWhiteText = `<BK> TU ?? ?? 73 E E`;
+  // Format: <BK> TU {state} {state} 73 E E
+  const tuWhiteText = `<BK> TU ${sendOnlyExpectedState} ${sendOnlyExpectedState} 73 E E`;
   prepareTxText(tuTxText, tuWhiteText);
   tuTxText.style.display = 'inline-block';
 
@@ -1005,8 +991,8 @@ function triggerSendOnlyExchangeResponse(userExchange) {
   sendOnlyPhase = 'tu';
   sendOnlyDecodedText = '';
 
-  // Clear auto-send callback for TU phase - it ends on E E detection
-  morseInput.clearOnKeyingStoppedCallback();
+  // Set up auto-send callback for TU phase (though TU doesn't auto-send, it ends on E E)
+  setupAutoSendCallback();
 }
 
 /**
@@ -1048,97 +1034,25 @@ function validateTuStateLetters(tuTxText, decodedText, expectedState) {
 
 /**
  * Completes the Send Only contact after user sends "E E".
- * Plays station's final "E E" response, logs the contact, and resets to idle phase.
+ * Logs the contact and resets to idle phase.
  */
 function completeSendOnlyContact() {
   console.log('Contact completed successfully!');
 
-  // Validate the state the user sent
-  const tuDecodedText = document.getElementById('tuDecodedText');
-  const userSentText = tuDecodedText ? tuDecodedText.textContent : sendOnlyDecodedText;
-  
-  // Check if the expected state appears in what the user sent
-  // Remove spaces and check if state letters are present
-  const userTextNoSpaces = userSentText.replace(/\s/g, '');
-  const expectedStateNoSpaces = sendOnlyExpectedState.replace(/\s/g, '');
-  const stateCorrect = userTextNoSpaces.includes(expectedStateNoSpaces);
+  // TODO: Add contact to log if needed
 
-  console.log('State validation:', {
-    expected: sendOnlyExpectedState,
-    userSent: userSentText,
-    correct: stateCorrect
-  });
+  // Reset to idle phase
+  sendOnlyPhase = 'idle';
+  sendOnlyDecodedText = '';
+  sendOnlyExpectedState = '';
+  activeStationIndex = null;
 
-  // Declare signoffEndTime with default value
-  let signoffEndTime = audioContext.currentTime + 1; // Default 1 second if no station
-
-  // Get the matched station for logging and final response
-  if (activeStationIndex !== null && activeStationIndex !== undefined && currentStations[activeStationIndex]) {
-    const matchedStation = currentStations[activeStationIndex];
-    const modeConfig = getModeConfig();
-
-    // Play station's final "E E" response
-    const theirSignoff = modeConfig.theirSignoff
-      ? modeConfig.theirSignoff(getYourStation(), matchedStation, null)
-      : 'EE';
-
-    console.log(`Station sending final signoff: ${theirSignoff}`);
-
-    // Play the signoff immediately
-    if (!matchedStation.player) {
-      matchedStation.player = createMorsePlayer(matchedStation);
-    }
-    signoffEndTime = matchedStation.player.playSentence(theirSignoff, audioContext.currentTime);
-    updateAudioLock(signoffEndTime);
-    
-    console.log(`Signoff will end at: ${signoffEndTime}, current time: ${audioContext.currentTime}`);
-    
-    // Increment total contacts
-    totalContacts++;
-
-    // Build WPM string
-    const wpmString = `${matchedStation.wpm}${
-      matchedStation.enableFarnsworth ? ` / ${matchedStation.farnsworthSpeed}` : ''
-    }`;
-
-    // Build extra info with state validation result
-    const stateInfo = stateCorrect 
-      ? `${sendOnlyExpectedState} ✓` 
-      : `${sendOnlyExpectedState} ✗`;
-
-    // Add to results table
-    addTableRow(
-      'resultsTable',
-      totalContacts,
-      matchedStation.callsign,
-      wpmString,
-      currentStationAttempts,
-      audioContext.currentTime - currentStationStartTime,
-      stateInfo
-    );
-
-    console.log(`Contact logged: ${matchedStation.callsign} - State: ${stateInfo}`);
-  }
-
-  // Calculate delay to wait for signoff to finish playing
-  const currentTime = audioContext.currentTime;
-  const delayMs = Math.max(0, (signoffEndTime - currentTime) * 1000) + 500; // Add 500ms buffer
-  
-  console.log(`Waiting ${delayMs}ms for signoff to complete`);
-  
-  // Reset to idle phase after signoff completes
-  setTimeout(() => {
-    sendOnlyPhase = 'idle';
-    sendOnlyDecodedText = '';
-    sendOnlyExpectedState = '';
-    activeStationIndex = null;
-
-    // Clear all displays
+  // Clear all displays
   const cqDecodedText = document.getElementById('cqDecodedText');
   const cqTxText = document.getElementById('cqTxText');
   const sendDecodedText = document.getElementById('sendDecodedText');
   const sendTxText = document.getElementById('sendTxText');
-  const tuDecodedTextElement = document.getElementById('tuDecodedText');
+  const tuDecodedText = document.getElementById('tuDecodedText');
   const tuTxText = document.getElementById('tuTxText');
 
   if (cqDecodedText) {
@@ -1157,17 +1071,16 @@ function completeSendOnlyContact() {
     sendTxText.innerHTML = '';
     sendTxText.style.display = 'none';
   }
-  if (tuDecodedTextElement) {
-    tuDecodedTextElement.textContent = '';
-    tuDecodedTextElement.style.display = 'none';
+  if (tuDecodedText) {
+    tuDecodedText.textContent = '';
+    tuDecodedText.style.display = 'none';
   }
   if (tuTxText) {
     tuTxText.innerHTML = '';
     tuTxText.style.display = 'none';
   }
 
-    console.log('Ready for next CQ');
-  }, delayMs);
+  console.log('Ready for next CQ');
 }
 
 /**

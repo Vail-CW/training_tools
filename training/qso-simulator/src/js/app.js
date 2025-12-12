@@ -734,9 +734,9 @@ function handleSendOnlyCharacter(letter) {
     // Validate state letters as user types
     validateTuStateLetters(tuTxText, sendOnlyDecodedText, sendOnlyExpectedState);
 
-    // Check for "E E" to complete the contact
-    if (sendOnlyDecodedText.includes('E E') && sendOnlyPhase === 'tu') {
-      console.log('E E detected - contact complete!');
+    // Check for "E E" or "EE" to complete the contact
+    if ((sendOnlyDecodedText.includes('E E') || sendOnlyDecodedText.includes('EE')) && sendOnlyPhase === 'tu') {
+      console.log('E E or EE detected - contact complete!');
 
       // Immediately set phase to 'completing' to prevent duplicate triggers
       sendOnlyPhase = 'completing';
@@ -1128,6 +1128,13 @@ function completeSendOnlyContact() {
   
   // Reset to idle phase after signoff completes
   setTimeout(() => {
+    // Remove the contacted station from the list
+    if (activeStationIndex !== null && activeStationIndex !== undefined) {
+      currentStations.splice(activeStationIndex, 1);
+      updateActiveStations(currentStations.length);
+      console.log(`Station removed. ${currentStations.length} stations remaining.`);
+    }
+
     sendOnlyPhase = 'idle';
     sendOnlyDecodedText = '';
     sendOnlyExpectedState = '';

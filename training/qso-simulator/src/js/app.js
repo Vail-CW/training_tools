@@ -1128,6 +1128,13 @@ function completeSendOnlyContact() {
   
   // Reset to idle phase after signoff completes
   setTimeout(() => {
+    // Remove the contacted station from the list
+    if (activeStationIndex !== null && activeStationIndex !== undefined) {
+      currentStations.splice(activeStationIndex, 1);
+      updateActiveStations(currentStations.length);
+      console.log(`Station removed. ${currentStations.length} stations remaining.`);
+    }
+
     sendOnlyPhase = 'idle';
     sendOnlyDecodedText = '';
     sendOnlyExpectedState = '';

@@ -85,7 +85,7 @@ export const modeLogicConfig = {
   pota: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
       `CQ CQ POTA DE ${yourStation.callsign} K`,
-    yourExchange: (yourStation, theirStation, arbitrary) => `UR 5NN <BK>`,
+    yourExchange: (yourStation, theirStation, arbitrary) => `TU UR 5NN 5NN ${yourStation.state} ${yourStation.state} <BK>`,
     theirExchange: (yourStation, theirStation, arbitrary) =>
       `<BK> UR 5NN ${theirStation.state} ${theirStation.state} <BK>`,
     yourSignoff: (yourStation, theirStation, arbitrary) =>

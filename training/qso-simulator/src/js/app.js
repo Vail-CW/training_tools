@@ -735,8 +735,11 @@ function handleSendOnlyCharacter(letter) {
     validateTuStateLetters(tuTxText, sendOnlyDecodedText, sendOnlyExpectedState);
 
     // Check for "E E" to complete the contact
-    if (sendOnlyDecodedText.includes('E E')) {
+    if (sendOnlyDecodedText.includes('E E') && sendOnlyPhase === 'tu') {
       console.log('E E detected - contact complete!');
+
+      // Immediately set phase to 'completing' to prevent duplicate triggers
+      sendOnlyPhase = 'completing';
 
       // Clear callbacks
       morseInput.clearOnKeyingStoppedCallback();
@@ -815,6 +818,10 @@ function triggerStationResponses() {
   // Get inputs (needed for addStations)
   inputs = getInputs();
   if (inputs === null) return;
+
+  // Initialize timing and attempt tracking for Send Only mode
+  currentStationStartTime = audioContext.currentTime;
+  currentStationAttempts = 0;
 
   let backgroundStaticDelay = 0;
   if (!isBackgroundStaticPlaying()) {
@@ -979,13 +986,13 @@ function triggerSendOnlyExchangeResponse(userExchange) {
 
   console.log('Station sent TU');
 
-  // Get the expected state from user's station
-  const stateField = document.getElementById('stateField');
-  sendOnlyExpectedState = stateField ? stateField.value.trim().toUpperCase() : '';
+  // Store the station's state for validation (they sent it in their exchange)
+  sendOnlyExpectedState = matchedStation.state ? matchedStation.state.toUpperCase() : '';
 
   // Prepare white TU text for user to send
-  // Format: <BK> TU {state} {state} 73 E E
-  const tuWhiteText = `<BK> TU ${sendOnlyExpectedState} ${sendOnlyExpectedState} 73 E E`;
+  // Format: <BK> TU ?? ?? 73 E E
+  // User must fill in the state they heard from the station
+  const tuWhiteText = `<BK> TU ?? ?? 73 E E`;
   prepareTxText(tuTxText, tuWhiteText);
   tuTxText.style.display = 'inline-block';
 
@@ -1041,25 +1048,97 @@ function validateTuStateLetters(tuTxText, decodedText, expectedState) {
 
 /**
  * Completes the Send Only contact after user sends "E E".
- * Logs the contact and resets to idle phase.
+ * Plays station's final "E E" response, logs the contact, and resets to idle phase.
  */
 function completeSendOnlyContact() {
   console.log('Contact completed successfully!');
 
-  // TODO: Add contact to log if needed
+  // Validate the state the user sent
+  const tuDecodedText = document.getElementById('tuDecodedText');
+  const userSentText = tuDecodedText ? tuDecodedText.textContent : sendOnlyDecodedText;
+  
+  // Check if the expected state appears in what the user sent
+  // Remove spaces and check if state letters are present
+  const userTextNoSpaces = userSentText.replace(/\s/g, '');
+  const expectedStateNoSpaces = sendOnlyExpectedState.replace(/\s/g, '');
+  const stateCorrect = userTextNoSpaces.includes(expectedStateNoSpaces);
 
-  // Reset to idle phase
-  sendOnlyPhase = 'idle';
-  sendOnlyDecodedText = '';
-  sendOnlyExpectedState = '';
-  activeStationIndex = null;
+  console.log('State validation:', {
+    expected: sendOnlyExpectedState,
+    userSent: userSentText,
+    correct: stateCorrect
+  });
 
-  // Clear all displays
+  // Declare signoffEndTime with default value
+  let signoffEndTime = audioContext.currentTime + 1; // Default 1 second if no station
+
+  // Get the matched station for logging and final response
+  if (activeStationIndex !== null && activeStationIndex !== undefined && currentStations[activeStationIndex]) {
+    const matchedStation = currentStations[activeStationIndex];
+    const modeConfig = getModeConfig();
+
+    // Play station's final "E E" response
+    const theirSignoff = modeConfig.theirSignoff
+      ? modeConfig.theirSignoff(getYourStation(), matchedStation, null)
+      : 'EE';
+
+    console.log(`Station sending final signoff: ${theirSignoff}`);
+
+    // Play the signoff immediately
+    if (!matchedStation.player) {
+      matchedStation.player = createMorsePlayer(matchedStation);
+    }
+    signoffEndTime = matchedStation.player.playSentence(theirSignoff, audioContext.currentTime);
+    updateAudioLock(signoffEndTime);
+    
+    console.log(`Signoff will end at: ${signoffEndTime}, current time: ${audioContext.currentTime}`);
+    
+    // Increment total contacts
+    totalContacts++;
+
+    // Build WPM string
+    const wpmString = `${matchedStation.wpm}${
+      matchedStation.enableFarnsworth ? ` / ${matchedStation.farnsworthSpeed}` : ''
+    }`;
+
+    // Build extra info with state validation result
+    const stateInfo = stateCorrect 
+      ? `${sendOnlyExpectedState} ✓` 
+      : `${sendOnlyExpectedState} ✗`;
+
+    // Add to results table
+    addTableRow(
+      'resultsTable',
+      totalContacts,
+      matchedStation.callsign,
+      wpmString,
+      currentStationAttempts,
+      audioContext.currentTime - currentStationStartTime,
+      stateInfo
+    );
+
+    console.log(`Contact logged: ${matchedStation.callsign} - State: ${stateInfo}`);
+  }
+
+  // Calculate delay to wait for signoff to finish playing
+  const currentTime = audioContext.currentTime;
+  const delayMs = Math.max(0, (signoffEndTime - currentTime) * 1000) + 500; // Add 500ms buffer
+  
+  console.log(`Waiting ${delayMs}ms for signoff to complete`);
+  
+  // Reset to idle phase after signoff completes
+  setTimeout(() => {
+    sendOnlyPhase = 'idle';
+    sendOnlyDecodedText = '';
+    sendOnlyExpectedState = '';
+    activeStationIndex = null;
+
+    // Clear all displays
   const cqDecodedText = document.getElementById('cqDecodedText');
   const cqTxText = document.getElementById('cqTxText');
   const sendDecodedText = document.getElementById('sendDecodedText');
   const sendTxText = document.getElementById('sendTxText');
-  const tuDecodedText = document.getElementById('tuDecodedText');
+  const tuDecodedTextElement = document.getElementById('tuDecodedText');
   const tuTxText = document.getElementById('tuTxText');
 
   if (cqDecodedText) {
@@ -1078,16 +1157,17 @@ function completeSendOnlyContact() {
     sendTxText.innerHTML = '';
     sendTxText.style.display = 'none';
   }
-  if (tuDecodedText) {
-    tuDecodedText.textContent = '';
-    tuDecodedText.style.display = 'none';
+  if (tuDecodedTextElement) {
+    tuDecodedTextElement.textContent = '';
+    tuDecodedTextElement.style.display = 'none';
   }
   if (tuTxText) {
     tuTxText.innerHTML = '';
     tuTxText.style.display = 'none';
   }
 
-  console.log('Ready for next CQ');
+    console.log('Ready for next CQ');
+  }, delayMs);
 }
 
 /**

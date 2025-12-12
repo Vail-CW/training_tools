@@ -11,7 +11,7 @@ export class Keyer {
     this.dahKey2 = 'BracketRight';
     this.wpm = 20;
     this.unit = 60; // length of dit in milliseconds; 60 is 20wpm
-    this.mode = 2; // 1: straight key, 2: iambicA, 3: iambicB, 4: ultimatic
+    this.mode = 1; // 1: straight key, 2: iambicA, 3: iambicB, 4: ultimatic (default: straight key)
     this.tone = 550;
     this.queue = [];
     this.ditKeyState = 0;

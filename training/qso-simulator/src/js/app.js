@@ -627,7 +627,7 @@ function handleSendOnlyCharacter(letter) {
 
   // CQ Phase: Waiting for user to send CQ
   if (sendOnlyPhase === 'idle' || sendOnlyPhase === 'cq') {
-    if (sendOnlyDecodedText.startsWith('CQ')) {
+    if (sendOnlyDecodedText.includes('CQ')) {
       sendOnlyPhase = 'cq';
 
       // Show white CQ text and green decoded text

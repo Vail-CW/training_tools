@@ -40,8 +40,8 @@ Each mode supports three difficulty levels:
 
 Complete workflow for POTA (Parks on the Air) Send Only difficulty:
 
-1. **Call CQ** - YOU send: `CQ CQ POTA [YOUR_CALL] [YOUR_CALL] K`
-2. **Stations Respond** - Multiple stations may respond with their callsigns
+1. **Call CQ** - YOU send: `CQ CQ POTA DE [YOUR_CALL]`
+2. **Stations Respond** - Multiple stations respond 1 second after your callsign is detected
 3. **Send Callsign** - YOU pick one and send their callsign
 4. **Station Confirms** - Station sends `R R` on perfect match, otherwise repeats callsign
 5. **Your Exchange** - White text shows: `TU UR 5NN 5NN MD MD <BK>` (with your state)
@@ -54,6 +54,12 @@ Complete workflow for POTA (Parks on the Air) Send Only difficulty:
    - ✓ = Correct (state matches what station sent)
    - ✗ = Incorrect (state doesn't match)
 10. **System Reset** - After ~500ms delay, returns to idle for next CQ
+
+### CQ Detection Details
+- White text appears as soon as "CQ" is detected anywhere in your sending
+- Stations respond 1 second after your callsign is detected in the decoded text
+- CQ message ends with your callsign (no "K" at the end)
+- Detection is case-insensitive
 
 ### State Validation Details
 - System compares the state you sent with what the station actually sent

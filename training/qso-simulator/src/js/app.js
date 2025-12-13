@@ -641,17 +641,15 @@ function handleSendOnlyCharacter(letter) {
       cqDecodedText.textContent = sendOnlyDecodedText;
       cqDecodedText.style.display = 'inline-block';
 
-      // Check if user has sent their callsign (appears twice in the message)
+      // Check if user has sent their callsign
       const callsign = yourStation.callsign.toUpperCase();
       const decodedUpper = sendOnlyDecodedText.toUpperCase();
       
-      // Count occurrences of callsign in the decoded text
-      const regex = new RegExp(callsign, 'g');
-      const matches = decodedUpper.match(regex);
-      const callsignCount = matches ? matches.length : 0;
+      // Check if callsign appears in the decoded text
+      const hasCallsign = decodedUpper.includes(callsign);
 
-      if (callsignCount >= 2) {
-        console.log('User callsign detected twice - triggering stations after 1 second delay');
+      if (hasCallsign) {
+        console.log('User callsign detected - triggering stations after 1 second delay');
         // Trigger stations to respond after 1 second delay
         sendOnlyPhase = 'callsign';
         sendOnlyDecodedText = '';

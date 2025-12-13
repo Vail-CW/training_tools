@@ -70,7 +70,7 @@ export const modeUIConfig = {
 export const modeLogicConfig = {
   single: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ DE ${yourStation.callsign} K`,
+      `CQ DE ${yourStation.callsign}`,
     yourExchange: (yourStation, theirStation, arbitrary) => `5NN`,
     theirExchange: (yourStation, theirStation, arbitrary) => `R 5NN TU`,
     yourSignoff: (yourStation, theirStation, arbitrary) => `TU EE`,
@@ -84,7 +84,7 @@ export const modeLogicConfig = {
   },
   pota: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ CQ POTA DE ${yourStation.callsign} K`,
+      `CQ CQ POTA DE ${yourStation.callsign} ${yourStation.callsign}`,
     yourExchange: (yourStation, theirStation, arbitrary) => `TU UR 5NN 5NN ${yourStation.state} ${yourStation.state} <BK>`,
     theirExchange: (yourStation, theirStation, arbitrary) =>
       `<BK> UR 5NN ${theirStation.state} ${theirStation.state} <BK>`,
@@ -100,7 +100,7 @@ export const modeLogicConfig = {
   },
   contest: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ TEST DE ${yourStation.callsign} K`,
+      `CQ TEST DE ${yourStation.callsign} ${yourStation.callsign}`,
     yourExchange: (yourStation, theirStation, arbitrary) => `5NN`,
     theirExchange: (yourStation, theirStation, arbitrary) =>
       `5NN ${theirStation.serialNumber} TU`,
@@ -116,7 +116,7 @@ export const modeLogicConfig = {
   },
   sst: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ SST ${yourStation.callsign} K`,
+      `CQ SST ${yourStation.callsign} ${yourStation.callsign}`,
     yourExchange: (yourStation, theirStation, arbitrary) =>
       `${yourStation.name} ${yourStation.state}`,
     theirExchange: (yourStation, theirStation, arbitrary) =>
@@ -133,7 +133,7 @@ export const modeLogicConfig = {
   },
   cwt: {
     cqMessage: (yourStation, theirStation, arbitrary) =>
-      `CQ CWT ${yourStation.callsign} K`,
+      `CQ CWT ${yourStation.callsign} ${yourStation.callsign}`,
     yourExchange: (yourStation, theirStation, arbitrary) =>
       `${yourStation.name} CWA`,
     theirExchange: (yourStation, theirStation, arbitrary) =>

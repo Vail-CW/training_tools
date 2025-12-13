@@ -641,23 +641,28 @@ function handleSendOnlyCharacter(letter) {
       cqDecodedText.textContent = sendOnlyDecodedText;
       cqDecodedText.style.display = 'inline-block';
 
-      // Check for end signals: <BK>, BK, or standalone K followed by space
-      // Only trigger when we see a SPACE after the K/BK
-      const hasBK = sendOnlyDecodedText.includes('<BK> ') || sendOnlyDecodedText.endsWith('<BK>');
-      const hasWordBK = /\sBK\s/.test(sendOnlyDecodedText);
-      const hasStandaloneK = /\sK\s/.test(sendOnlyDecodedText);
+      // Check if user has sent their callsign (appears twice in the message)
+      const callsign = yourStation.callsign.toUpperCase();
+      const decodedUpper = sendOnlyDecodedText.toUpperCase();
+      
+      // Count occurrences of callsign in the decoded text
+      const regex = new RegExp(callsign, 'g');
+      const matches = decodedUpper.match(regex);
+      const callsignCount = matches ? matches.length : 0;
 
-      if (hasBK || hasWordBK || hasStandaloneK) {
-        console.log('Triggering stations to respond');
-        // Trigger stations to respond without playing user's CQ
+      if (callsignCount >= 2) {
+        console.log('User callsign detected twice - triggering stations after 1 second delay');
+        // Trigger stations to respond after 1 second delay
         sendOnlyPhase = 'callsign';
         sendOnlyDecodedText = '';
 
         // Set up auto-send callback for callsign phase
         setupAutoSendCallback();
 
-        // Call the station response logic directly instead of full cq()
-        triggerStationResponses();
+        // Call the station response logic after 1 second delay
+        setTimeout(() => {
+          triggerStationResponses();
+        }, 1000);
         return true;
       }
       return true; // We handled this character

@@ -65,6 +65,26 @@
     color: #00d1b2;
 }
 
+/* Compact Tool Card */
+.tool-card-compact {
+    padding: 1.5rem;
+    min-height: 200px;
+}
+
+.tool-card-compact .card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.tool-card-compact .card-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.tool-card-compact .card-description {
+    font-size: 0.875rem;
+}
+
 /* Card Badge (BETA) */
 .card-badge {
     position: absolute;
@@ -279,12 +299,25 @@
         min-height: 240px;
     }
 
+    .tool-card-compact {
+        padding: 1.25rem;
+        min-height: 180px;
+    }
+
     .card-icon {
         font-size: 2.5rem;
     }
 
+    .tool-card-compact .card-icon {
+        font-size: 2rem;
+    }
+
     .card-title {
         font-size: 1.25rem;
+    }
+
+    .tool-card-compact .card-title {
+        font-size: 1.1rem;
     }
 
     .hero-section .title {

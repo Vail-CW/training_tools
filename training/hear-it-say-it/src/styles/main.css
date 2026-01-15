@@ -469,6 +469,18 @@ body {
   margin-bottom: var(--spacing-lg);
 }
 
+/* Max tries slider - indented sub-setting, hidden by default */
+.setting-group.max-tries-group {
+  margin-left: var(--spacing-lg);
+  padding-left: var(--spacing-md);
+  border-left: 2px solid var(--glass-border);
+  transition: opacity var(--transition-normal), max-height var(--transition-normal);
+}
+
+.setting-group.max-tries-group.hidden {
+  display: none;
+}
+
 .setting-group label,
 .setting-group h3 {
   display: block;

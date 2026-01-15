@@ -17,6 +17,9 @@ export class SettingsPanel {
   private gainSlider: HTMLInputElement;
   private gainValue: HTMLElement;
   private repeatToggle: HTMLInputElement;
+  private maxTriesSlider: HTMLInputElement;
+  private maxTriesValue: HTMLElement;
+  private maxTriesGroup: HTMLElement;
   private strictNatoToggle: HTMLInputElement;
   private freqSlider: HTMLInputElement;
   private freqValue: HTMLElement;
@@ -47,6 +50,9 @@ export class SettingsPanel {
     this.gainSlider = document.getElementById('gain-slider') as HTMLInputElement;
     this.gainValue = document.getElementById('gain-value') as HTMLElement;
     this.repeatToggle = document.getElementById('repeat-toggle') as HTMLInputElement;
+    this.maxTriesSlider = document.getElementById('max-tries-slider') as HTMLInputElement;
+    this.maxTriesValue = document.getElementById('max-tries-value') as HTMLElement;
+    this.maxTriesGroup = document.getElementById('max-tries-group') as HTMLElement;
     this.strictNatoToggle = document.getElementById('strict-nato-toggle') as HTMLInputElement;
     this.freqSlider = document.getElementById('freq-slider') as HTMLInputElement;
     this.freqValue = document.getElementById('freq-value') as HTMLElement;
@@ -169,6 +175,13 @@ export class SettingsPanel {
 
     this.repeatToggle.addEventListener('change', () => {
       store.updateSettings({ repeatUntilCorrect: this.repeatToggle.checked });
+      this.updateMaxTriesVisibility();
+    });
+
+    this.maxTriesSlider.addEventListener('input', () => {
+      const value = parseInt(this.maxTriesSlider.value);
+      this.maxTriesValue.textContent = value === 6 ? 'Unlimited' : value.toString();
+      store.updateSettings({ maxRepeatTries: value });
     });
 
     this.strictNatoToggle.addEventListener('change', () => {
@@ -228,10 +241,24 @@ export class SettingsPanel {
     this.gainValue.textContent = settings.adaptiveGain.toString();
 
     this.repeatToggle.checked = settings.repeatUntilCorrect;
+
+    this.maxTriesSlider.value = settings.maxRepeatTries.toString();
+    this.maxTriesValue.textContent = settings.maxRepeatTries === 6 ? 'Unlimited' : settings.maxRepeatTries.toString();
+    this.updateMaxTriesVisibility();
+
     this.strictNatoToggle.checked = settings.strictNatoMode;
 
     this.freqSlider.value = settings.toneFrequency.toString();
     this.freqValue.textContent = settings.toneFrequency.toString();
+  }
+
+  private updateMaxTriesVisibility(): void {
+    const settings = store.getSettings();
+    if (settings.repeatUntilCorrect) {
+      this.maxTriesGroup.classList.remove('hidden');
+    } else {
+      this.maxTriesGroup.classList.add('hidden');
+    }
   }
 
   private renderCharacterSets(): void {

@@ -158,6 +158,9 @@ export class PracticeSession {
     previousWMAs: Record<string, { wma: number; mostRecent: number }>;
   } | null = null;
 
+  // Track repeat attempts for max tries feature
+  private repeatAttempts: number = 0;
+
   // Audio level monitor for visual feedback
   private audioLevelMonitor: AudioLevelMonitor;
 
@@ -668,6 +671,7 @@ export class PracticeSession {
     store.updateSession({ currentChar: char });
     this.previousChar = char;
     this.currentWord = null; // Clear any word state
+    this.repeatAttempts = 0; // Reset repeat attempts for new character
 
     // Reset display
     this.currentCharEl.textContent = '—';
@@ -774,6 +778,7 @@ export class PracticeSession {
     this.currentWord = word;
     this.previousWord = word;
     store.updateSession({ currentChar: word }); // Store word in currentChar for display
+    this.repeatAttempts = 0; // Reset repeat attempts for new word
 
     // Reset display
     this.currentCharEl.textContent = '—';
@@ -986,13 +991,21 @@ export class PracticeSession {
       // Check if this was an unrecognized word (special marker from speech recognition)
       const isUnrecognized = recognized.startsWith('[unrecognized:');
 
-      if (settings.repeatUntilCorrect) {
+      // Track repeat attempts for max tries feature
+      this.repeatAttempts++;
+      const maxTries = settings.maxRepeatTries;
+      const reachedMax = maxTries < 6 && this.repeatAttempts >= maxTries;
+
+      if (settings.repeatUntilCorrect && !reachedMax) {
         // Don't reveal the answer in repeat mode - they need to figure it out
         this.feedbackTextEl.textContent = 'Incorrect - try again';
         this.currentCharEl.textContent = '—';
         this.currentCharEl.className = 'current-char incorrect';
       } else {
-        if (isUnrecognized) {
+        // Show the answer (either not in repeat mode, or max tries reached)
+        if (reachedMax) {
+          this.feedbackTextEl.textContent = `Max tries reached - was "${displayChar}"`;
+        } else if (isUnrecognized) {
           // Show the raw transcript they said
           this.feedbackTextEl.textContent = `"${rawTranscript}" not recognized - was "${displayChar}"`;
         } else {
@@ -1038,7 +1051,12 @@ export class PracticeSession {
       clearTimeout(this.nextCharTimeout);
     }
 
-    if (!isCorrect && settings.repeatUntilCorrect) {
+    // Check if we should repeat (repeat mode enabled AND haven't reached max tries)
+    const maxTries = settings.maxRepeatTries;
+    const shouldRepeat = !isCorrect && settings.repeatUntilCorrect &&
+                         (maxTries >= 6 || this.repeatAttempts < maxTries);
+
+    if (shouldRepeat) {
       // Repeat mode: short delay then replay (no Accept My Answer in character mode)
       this.nextCharTimeout = window.setTimeout(() => {
         this.nextCharTimeout = null;
@@ -1047,7 +1065,7 @@ export class PracticeSession {
         }
       }, NEXT_CHAR_DELAY);
     } else if (!isCorrect) {
-      // Wrong answer (not in repeat mode): short delay then next character
+      // Wrong answer (not in repeat mode or max tries reached): short delay then next character
       this.nextCharTimeout = window.setTimeout(() => {
         this.nextCharTimeout = null;
         if (store.getSession().isRunning) {
@@ -1127,13 +1145,23 @@ export class PracticeSession {
         this.debugHeardEl.style.color = '#00d26a';
       }
     } else {
-      if (settings.repeatUntilCorrect) {
+      // Track repeat attempts for max tries feature
+      this.repeatAttempts++;
+      const maxTries = settings.maxRepeatTries;
+      const reachedMax = maxTries < 6 && this.repeatAttempts >= maxTries;
+
+      if (settings.repeatUntilCorrect && !reachedMax) {
         // Don't reveal the answer in repeat mode
         this.feedbackTextEl.textContent = 'Incorrect - try again';
         this.currentCharEl.textContent = '—';
         this.currentCharEl.className = 'current-char incorrect';
       } else {
-        this.feedbackTextEl.textContent = `You said "${rawTranscript}" - was "${expectedWord}"`;
+        // Show the answer (either not in repeat mode, or max tries reached)
+        if (reachedMax) {
+          this.feedbackTextEl.textContent = `Max tries reached - was "${expectedWord}"`;
+        } else {
+          this.feedbackTextEl.textContent = `You said "${rawTranscript}" - was "${expectedWord}"`;
+        }
       }
 
       // Always store wrong answer info and show accept button (even in repeat mode)
@@ -1187,7 +1215,12 @@ export class PracticeSession {
       clearTimeout(this.nextCharTimeout);
     }
 
-    if (!isCorrect && settings.repeatUntilCorrect) {
+    // Check if we should repeat (repeat mode enabled AND haven't reached max tries)
+    const maxTries = settings.maxRepeatTries;
+    const shouldRepeat = !isCorrect && settings.repeatUntilCorrect &&
+                         (maxTries >= 6 || this.repeatAttempts < maxTries);
+
+    if (shouldRepeat) {
       // Repeat mode: wait longer to give time for "Accept My Answer", then replay
       this.nextCharTimeout = window.setTimeout(() => {
         this.nextCharTimeout = null;
@@ -1197,7 +1230,7 @@ export class PracticeSession {
         }
       }, WRONG_ANSWER_DELAY);
     } else if (!isCorrect) {
-      // Wrong answer (not in repeat mode): wait longer to give time for "Accept My Answer"
+      // Wrong answer (not in repeat mode or max tries reached): wait longer to give time for "Accept My Answer"
       this.nextCharTimeout = window.setTimeout(() => {
         this.nextCharTimeout = null;
         this.hideAcceptButton();
@@ -1320,6 +1353,7 @@ export class PracticeSession {
     this.previousCallsign = callsign;
     this.currentWord = null; // Clear word state
     store.updateSession({ currentChar: callsign });
+    this.repeatAttempts = 0; // Reset repeat attempts for new callsign
 
     // Reset display
     this.currentCharEl.textContent = '—';
@@ -1435,13 +1469,23 @@ export class PracticeSession {
         this.debugHeardEl.style.color = '#00d26a';
       }
     } else {
+      // Track repeat attempts for max tries feature
+      this.repeatAttempts++;
+      const maxTries = settings.maxRepeatTries;
+      const reachedMax = maxTries < 6 && this.repeatAttempts >= maxTries;
+
       const errorDesc = getErrorDescription(result);
-      if (settings.repeatUntilCorrect) {
+      if (settings.repeatUntilCorrect && !reachedMax) {
         this.feedbackTextEl.textContent = `Incorrect - ${errorDesc}`;
         this.currentCharEl.textContent = '—';
         this.currentCharEl.className = 'current-char incorrect';
       } else {
-        this.feedbackTextEl.textContent = `${errorDesc} - was "${this.currentCallsign}"`;
+        // Show the answer (either not in repeat mode, or max tries reached)
+        if (reachedMax) {
+          this.feedbackTextEl.textContent = `Max tries reached - was "${this.currentCallsign}"`;
+        } else {
+          this.feedbackTextEl.textContent = `${errorDesc} - was "${this.currentCallsign}"`;
+        }
       }
 
       if (this.debugHeardEl) {
@@ -1490,7 +1534,12 @@ export class PracticeSession {
       clearTimeout(this.nextCharTimeout);
     }
 
-    if (!isCorrect && settings.repeatUntilCorrect) {
+    // Check if we should repeat (repeat mode enabled AND haven't reached max tries)
+    const maxTries = settings.maxRepeatTries;
+    const shouldRepeat = !isCorrect && settings.repeatUntilCorrect &&
+                         (maxTries >= 6 || this.repeatAttempts < maxTries);
+
+    if (shouldRepeat) {
       // Repeat mode: replay the same callsign after longer delay
       this.nextCharTimeout = window.setTimeout(() => {
         this.nextCharTimeout = null;
@@ -1499,7 +1548,7 @@ export class PracticeSession {
         }
       }, CALLSIGN_WRONG_DELAY);
     } else if (!isCorrect) {
-      // Wrong answer (not in repeat mode): longer delay to review the answer
+      // Wrong answer (not in repeat mode or max tries reached): longer delay to review the answer
       this.nextCharTimeout = window.setTimeout(() => {
         this.nextCharTimeout = null;
         if (store.getSession().isRunning) {

@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS: Settings = {
   toneFrequency: 700,
   volume: 0.5,
   repeatUntilCorrect: false,
+  maxRepeatTries: 6, // 1-5 = limited tries, 6 = unlimited
   strictNatoMode: false, // Default: accept any word starting with the correct letter
 };
 

@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	let currentAnswer = '';
 	let currentSpeed = 12;
 	let customCharacters = new Set();
+	let nextCharDelay = 2000; // Delay before next character (ms)
 
 	// Update WPM display
 	const wpmSlider = document.getElementById('practice-wpm');
@@ -51,6 +52,26 @@ document.addEventListener('DOMContentLoaded', () => {
 			charCountOutput.textContent = e.target.value;
 		});
 		charCountOutput.textContent = charCountSlider.value;
+	}
+
+	// Delay before next character slider
+	const nextDelaySlider = document.getElementById('next-delay');
+	if (nextDelaySlider) {
+		const nextDelayOutput = document.querySelector('output[for="next-delay"]');
+
+		// Load saved delay
+		const savedDelay = localStorage.getItem('vailTrainingCopyDelay');
+		if (savedDelay !== null) {
+			nextCharDelay = parseInt(savedDelay);
+			nextDelaySlider.value = nextCharDelay;
+		}
+		nextDelayOutput.textContent = nextDelaySlider.value;
+
+		nextDelaySlider.addEventListener('input', (e) => {
+			nextCharDelay = parseInt(e.target.value);
+			nextDelayOutput.textContent = nextCharDelay;
+			localStorage.setItem('vailTrainingCopyDelay', nextCharDelay);
+		});
 	}
 
 	// Custom character selection
@@ -389,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					resultArea.style.display = 'none';
 					generateNewProblem();
 				}
-			}, 2000);
+			}, nextCharDelay);
 		} else {
 			// Wrong answer - show visual feedback, then replay after 1 second
 			stats.accuracy = Math.round((stats.correct / stats.attempts) * 100);
@@ -416,13 +437,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Clear the input
 			answerInput.value = '';
 
-			// Hide the "Try again" message and replay after 1 second
+			// Hide the "Try again" message and replay after delay
 			setTimeout(() => {
 				if (isPracticing) {
 					resultArea.style.display = 'none';
 					playCurrentMorse();
 				}
-			}, 1000);
+			}, nextCharDelay);
 		}
 	}
 

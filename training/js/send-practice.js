@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Wake lock
 	let wakeLock = null;
 
+	// Delay before next character (ms)
+	let nextCharDelay = 1000;
+
 	/**
 	 * Request screen wake lock to prevent display from sleeping
 	 */
@@ -164,12 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				setTimeout(() => {
 					targetCharDisplay.style.backgroundColor = '';
 					generateNewTarget();
-				}, 1000);
+				}, nextCharDelay);
 			} else {
 				// Fallback
 				sentChars = '';
 				if (sentOutput) sentOutput.value = '';
-				setTimeout(() => generateNewTarget(), 500);
+				setTimeout(() => generateNewTarget(), nextCharDelay);
 			}
 		} else if (sentUpper.length >= targetChar.length) {
 			// Wrong - sent enough characters but doesn't match
@@ -182,14 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
 				sentOutput.style.borderColor = '#ff3860';
 				setTimeout(() => {
 					sentOutput.style.borderColor = '';
-				}, 500);
+				}, Math.min(nextCharDelay, 500));
 			}
 
-			// Clear sent field after brief delay
+			// Clear sent field after delay
 			setTimeout(() => {
 				sentChars = '';
 				if (sentOutput) sentOutput.value = '';
-			}, 800);
+			}, nextCharDelay);
 		} else if (!targetUpper.startsWith(sentUpper)) {
 			// Wrong character in sequence
 			console.log('Wrong character! Sent:', sentUpper, 'Target:', targetUpper);
@@ -201,14 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
 				sentOutput.style.borderColor = '#ff3860';
 				setTimeout(() => {
 					sentOutput.style.borderColor = '';
-				}, 500);
+				}, Math.min(nextCharDelay, 500));
 			}
 
-			// Clear sent field
+			// Clear sent field after delay
 			setTimeout(() => {
 				sentChars = '';
 				if (sentOutput) sentOutput.value = '';
-			}, 500);
+			}, nextCharDelay);
 		}
 	}
 
@@ -416,6 +419,26 @@ document.addEventListener('DOMContentLoaded', () => {
 			await requestWakeLock();
 		}
 	});
+
+	// Delay before next character slider
+	const nextDelaySlider = document.getElementById('next-delay');
+	if (nextDelaySlider) {
+		const nextDelayOutput = document.querySelector('output[for="next-delay"]');
+
+		// Load saved delay
+		const savedDelay = localStorage.getItem('vailTrainingSendDelay');
+		if (savedDelay !== null) {
+			nextCharDelay = parseInt(savedDelay);
+			nextDelaySlider.value = nextCharDelay;
+		}
+		nextDelayOutput.textContent = nextDelaySlider.value;
+
+		nextDelaySlider.addEventListener('input', (e) => {
+			nextCharDelay = parseInt(e.target.value);
+			nextDelayOutput.textContent = nextCharDelay;
+			localStorage.setItem('vailTrainingSendDelay', nextCharDelay);
+		});
+	}
 
 	// Initialize morse input system
 	initMorseInput();

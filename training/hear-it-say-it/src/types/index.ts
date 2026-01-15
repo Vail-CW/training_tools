@@ -61,6 +61,7 @@ export interface Settings {
   toneFrequency: number; // Hz (400-1000)
   volume: number; // 0-1
   repeatUntilCorrect: boolean; // Repeat wrong characters until correct
+  maxRepeatTries: number; // Max tries before showing answer (1-5, 6=unlimited)
   strictNatoMode: boolean; // When true, only accept NATO phonetic words and single letters
 }
 

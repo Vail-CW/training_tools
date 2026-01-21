@@ -36,60 +36,103 @@ const SPEECH_MAP: Record<string, string> = {
   // Common variations and NATO misspellings
   'alfa': 'A', 'juliett': 'J', 'ecco': 'E', 'eco': 'E',
 
+  // Letter carrier phrases (e.g., "letter B")
+  'letter a': 'A', 'letter b': 'B', 'letter c': 'C', 'letter d': 'D',
+  'letter e': 'E', 'letter f': 'F', 'letter g': 'G', 'letter h': 'H',
+  'letter i': 'I', 'letter j': 'J', 'letter k': 'K', 'letter l': 'L',
+  'letter m': 'M', 'letter n': 'N', 'letter o': 'O', 'letter p': 'P',
+  'letter q': 'Q', 'letter r': 'R', 'letter s': 'S', 'letter t': 'T',
+  'letter u': 'U', 'letter v': 'V', 'letter w': 'W', 'letter x': 'X',
+  'letter y': 'Y', 'letter z': 'Z',
+  // "the letter X" variants
+  'the letter a': 'A', 'the letter b': 'B', 'the letter c': 'C', 'the letter d': 'D',
+  'the letter e': 'E', 'the letter f': 'F', 'the letter g': 'G', 'the letter h': 'H',
+  'the letter i': 'I', 'the letter j': 'J', 'the letter k': 'K', 'the letter l': 'L',
+  'the letter m': 'M', 'the letter n': 'N', 'the letter o': 'O', 'the letter p': 'P',
+  'the letter q': 'Q', 'the letter r': 'R', 'the letter s': 'S', 'the letter t': 'T',
+  'the letter u': 'U', 'the letter v': 'V', 'the letter w': 'W', 'the letter x': 'X',
+  'the letter y': 'Y', 'the letter z': 'Z',
+
   // Common Web Speech API misrecognitions for single letters
   // (Note: single letter keys like 'a', 'b' etc are already defined above in Direct letters)
   // A
   'hey': 'A', 'ay': 'A', 'eh': 'A', 'aye': 'A', 'a.': 'A', 'aa': 'A', 'ah': 'A', 'ae': 'A',
+  'hay': 'A', 'weigh': 'A', 'way': 'A', 'say': 'A', 'day': 'A', 'may': 'A', 'pay': 'A', 'play': 'A', 'stay': 'A', 'grey': 'A', 'gray': 'A',
   // B
   'be': 'B', 'bee': 'B', 'b.': 'B', 'bea': 'B', 'beat': 'B', 'bees': 'B', 'beef': 'B',
+  'beam': 'B', 'bean': 'B', 'been': 'B', 'beach': 'B', 'beep': 'B', 'beer': 'B', 'bead': 'B',
   // C
   'see': 'C', 'sea': 'C', 'c.': 'C', 'si': 'C', 'she': 'C', 'seat': 'C', 'seed': 'C',
+  'seal': 'C', 'seem': 'C', 'seen': 'C', 'seize': 'C', 'cease': 'C',
   // D
   'de': 'D', 'dee': 'D', 'd.': 'D', 'the': 'D', 'deal': 'D', 'deep': 'D', 'dean': 'D',
+  'dear': 'D', 'deer': 'D', 'deed': 'D', 'deem': 'D',
   // E
   'he': 'E', 'ee': 'E', 'e.': 'E', 'ye': 'E', 'me': 'E', 'ea': 'E', 'eee': 'E', 'heat': 'E', 'eat': 'E', 'even': 'E',
+  'ease': 'E', 'eel': 'E', 'each': 'E', 'east': 'E', 'evil': 'E', 'equal': 'E',
   // F
   'ef': 'F', 'eff': 'F', 'f.': 'F', 'if': 'F', 'have': 'F', 'half': 'F', 'jeff': 'F',
+  'effort': 'F', 'effect': 'F',
   // G
   'gee': 'G', 'ge': 'G', 'g.': 'G', 'ji': 'G', 'jee': 'G', 'geez': 'G', 'jeez': 'G', 'jesus': 'G',
+  'gene': 'G', 'jean': 'G', 'jeans': 'G', 'genius': 'G',
   // H
-  'age': 'H', 'ach': 'H', 'h.': 'H', 'aitch': 'H', 'each': 'H', 'ache': 'H', 'ages': 'H',
+  'age': 'H', 'ach': 'H', 'h.': 'H', 'aitch': 'H', 'ache': 'H', 'ages': 'H',
+  'eighth': 'H',
   // I
   'eye': 'I', 'i.': 'I', 'hi': 'I', 'high': 'I', 'eyes': 'I', 'ice': 'I',
+  'buy': 'I', 'by': 'I', 'bye': 'I', 'guy': 'I', 'my': 'I', 'tie': 'I', 'try': 'I', 'fly': 'I', 'sky': 'I', 'cry': 'I', 'pie': 'I', 'die': 'I', 'shy': 'I',
   // J
   'jay': 'J', 'je': 'J', 'j.': 'J', 'jae': 'J', 'jade': 'J', 'jays': 'J', 'jane': 'J', 'james': 'J',
+  'jail': 'J', 'jake': 'J', 'jack': 'J',
   // K
   'kay': 'K', 'ke': 'K', 'k.': 'K', 'okay': 'K', 'ok': 'K', 'cake': 'K', 'kate': 'K', 'cay': 'K', 'kaye': 'K',
+  'came': 'K', 'case': 'K', 'cave': 'K',
   // L
   'el': 'L', 'ell': 'L', 'l.': 'L', 'elle': 'L', 'ale': 'L', 'hell': 'L', 'well': 'L', 'bell': 'L',
+  'tell': 'L', 'sell': 'L', 'cell': 'L', 'fell': 'L', 'spell': 'L', 'shell': 'L', 'smell': 'L', 'yell': 'L', 'dwell': 'L',
   // M
   'em': 'M', 'm.': 'M', 'am': 'M', 'um': 'M', 'him': 'M', 'them': 'M', 'mm': 'M',
+  'gem': 'M', 'hem': 'M', 'stem': 'M', 'condemn': 'M',
   // N
   'en': 'N', 'n.': 'N', 'and': 'N', 'an': 'N', 'in': 'N', 'end': 'N', 'hen': 'N', 'then': 'N', 'when': 'N',
+  'pen': 'N', 'ten': 'N', 'men': 'N', 'den': 'N', 'ben': 'N', 'ken': 'N', 'yen': 'N', 'zen': 'N',
   // O
   'oh': 'O', 'owe': 'O', 'o.': 'O', 'eau': 'O', 'oo': 'O', 'ooh': 'O', 'go': 'O', 'no': 'O', 'so': 'O', 'yo': 'O',
+  'low': 'O', 'row': 'O', 'show': 'O', 'slow': 'O', 'snow': 'O', 'grow': 'O', 'flow': 'O', 'blow': 'O', 'know': 'O', 'throw': 'O', 'glow': 'O',
   // P
   'pea': 'P', 'pe': 'P', 'p.': 'P', 'pee': 'P', 'peak': 'P', 'peas': 'P', 'pete': 'P', 'peace': 'P',
+  'please': 'P', 'piece': 'P', 'peach': 'P', 'peel': 'P',
   // Q
   'cue': 'Q', 'queue': 'Q', 'q.': 'Q', 'que': 'Q', 'cu': 'Q', 'cute': 'Q',
+  'cube': 'Q', 'cupid': 'Q', 'curious': 'Q', 'fuel': 'Q', 'few': 'Q', 'view': 'Q', 'hugh': 'Q', 'hue': 'Q', 'huge': 'Q',
   // R
   'are': 'R', 'ar': 'R', 'r.': 'R', 'our': 'R', 'or': 'R', 'err': 'R', 'her': 'R',
+  'car': 'R', 'bar': 'R', 'far': 'R', 'star': 'R', 'jar': 'R', 'tar': 'R', 'par': 'R', 'mar': 'R',
   // S
   'es': 'S', 'ass': 'S', 's.': 'S', 'yes': 'S', 'is': 'S', 'us': 'S', 'this': 'S', 'has': 'S', 'was': 'S',
+  'guess': 'S', 'less': 'S', 'mess': 'S', 'bless': 'S', 'dress': 'S', 'press': 'S', 'stress': 'S', 'access': 'S', 'excess': 'S',
   // T
   'tea': 'T', 'tee': 'T', 't.': 'T', 'te': 'T', 'ti': 'T', 'teeth': 'T', 'teas': 'T', 'teen': 'T',
+  'team': 'T', 'teach': 'T', 'tear': 'T', 'tease': 'T',
   // U
   'you': 'U', 'ewe': 'U', 'u.': 'U', 'ew': 'U', 'yu': 'U', 'yew': 'U', 'use': 'U', 'used': 'U', 'who': 'U',
+  'youth': 'U', 'unit': 'U', 'union': 'U', 'unique': 'U', 'universe': 'U', 'university': 'U', 'usual': 'U', 'utility': 'U',
   // V
   'vee': 'V', 've': 'V', 'v.': 'V', 'vi': 'V', 'fee': 'V', 'wee': 'V', 'visa': 'V',
+  'veal': 'V', 'vein': 'V', 'venus': 'V', 'vehicle': 'V', 'very': 'V',
   // W
   'double you': 'W', 'double u': 'W', 'w.': 'W', 'dub': 'W', 'dubs': 'W',
+  'dubya': 'W', 'double': 'W',
   // X
   'ex': 'X', 'x.': 'X', 'eggs': 'X', 'axe': 'X', 'ax': 'X', 'next': 'X', 'text': 'X', 'hex': 'X',
+  'sex': 'X', 'flex': 'X', 'rex': 'X', 'lex': 'X', 'vex': 'X', 'apex': 'X', 'latex': 'X', 'annex': 'X',
   // Y
   'why': 'Y', 'y.': 'Y', 'wie': 'Y', 'wye': 'Y', 'wise': 'Y', 'white': 'Y',
+  'wire': 'Y', 'wife': 'Y', 'wide': 'Y', 'wild': 'Y', 'while': 'Y', 'wipe': 'Y',
   // Z
   'zee': 'Z', 'zed': 'Z', 'z.': 'Z', 'ze': 'Z', 'said': 'Z', 'seas': 'Z', 'easy': 'Z',
+  'zeal': 'Z', 'zebra': 'Z', 'zip': 'Z', 'zone': 'Z', 'zoo': 'Z',
 
   // Numbers - digits
   '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
@@ -99,9 +142,37 @@ const SPEECH_MAP: Record<string, string> = {
   'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
   'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
   'niner': '9', // Ham radio convention
-  // Number misrecognitions
+
+  // Number carrier phrases (e.g., "number two")
+  'number zero': '0', 'number one': '1', 'number two': '2', 'number three': '3',
+  'number four': '4', 'number five': '5', 'number six': '6', 'number seven': '7',
+  'number eight': '8', 'number nine': '9',
+
+  // Spanish numbers
+  'cero': '0', 'uno': '1', 'dos': '2', 'tres': '3', 'cuatro': '4',
+  'cinco': '5', 'seis': '6', 'siete': '7', 'ocho': '8', 'nueve': '9',
+
+  // German numbers
+  'null': '0', 'eins': '1', 'zwei': '2', 'drei': '3', 'vier': '4',
+  'fünf': '5', 'funf': '5', 'sechs': '6', 'sieben': '7', 'acht': '8', 'neun': '9',
+  // German number sound-alikes (how speech recognition might hear them)
+  'zvi': '2', 'svai': '2', 'drai': '3', 'fear': '4', 'feer': '4',
+  'zex': '6', 'ziben': '7', 'noin': '9',
+
+  // Number misrecognitions and sound-alikes
   'to': '2', 'too': '2', 'for': '4', 'ate': '8', 'won': '1',
-  'tree': '3', 'free': '3', 'fiver': '5', 'sex': '6', 'sicks': '6',
+  'tree': '3', 'free': '3', 'fiver': '5', 'sicks': '6',
+  // Additional number sound-alikes
+  'hero': '0', 'cheerio': '0',
+  'juan': '1', 'want': '1', 'wand': '1', 'run': '1', 'done': '1', 'sun': '1', 'bun': '1',
+  'tu': '2', 'tooth': '2', 'true': '2', 'through': '2', 'stew': '2', 'do': '2', 'dew': '2', 'due': '2', 'new': '2', 'knew': '2',
+  'treat': '3', 'street': '3', 'agree': '3', 'decree': '3',
+  'floor': '4', 'more': '4', 'door': '4', 'shore': '4', 'core': '4', 'store': '4', 'pour': '4', 'bore': '4', 'war': '4', 'roar': '4',
+  'hive': '5', 'dive': '5', 'drive': '5', 'alive': '5', 'jive': '5', 'thrive': '5', 'strive': '5',
+  'sick': '6', 'fix': '6', 'mix': '6', 'kicks': '6', 'clicks': '6', 'tricks': '6', 'picks': '6', 'sticks': '6', 'bricks': '6', 'dicks': '6',
+  'heaven': '7', 'kevin': '7', 'eleven': '7', 'leaven': '7',
+  'wait': '8', 'weight': '8', 'late': '8', 'gate': '8', 'great': '8', 'fate': '8', 'rate': '8', 'state': '8', 'plate': '8', 'date': '8', 'mate': '8', 'bait': '8', 'straight': '8',
+  'mind': '9', 'line': '9', 'fine': '9', 'dine': '9', 'mine': '9', 'pine': '9', 'sign': '9', 'shine': '9', 'whine': '9', 'vine': '9', 'spine': '9', 'divine': '9',
 
   // Punctuation
   'period': '.', 'dot': '.', 'stop': '.', 'full stop': '.', '.': '.',
@@ -110,7 +181,7 @@ const SPEECH_MAP: Record<string, string> = {
   'slash': '/', 'stroke': '/', 'forward slash': '/', '/': '/',
 
   // Prosigns
-  'break': '=', 'bt': '=', 'pause': '=', 'bee tee': '=', '=': '=', 'equals': '=', 'equal': '=',
+  'break': '=', 'bt': '=', 'pause': '=', 'bee tee': '=', '=': '=', 'equals': '=',
   'over': '+', 'a r': '+', '+': '+', 'plus': '+',
   'clear': '>', 'sk': '>', 'out': '>', 'silent key': '>', 's k': '>', '>': '>',
 };

@@ -1,6 +1,15 @@
 import type { RecognitionResult, VoiceCalibration } from '../types';
 import { store } from '../state/store';
 
+// Prosign spoken forms - used for context-aware matching when expecting a prosign
+// These include forms that conflict with letter mappings (like 'ar' which normally maps to 'R')
+const PROSIGN_SPOKEN_FORMS: Record<string, string[]> = {
+  '=': ['bt', 'b t', 'bee tee', 'bravo tango', 'bravo tang', 'bravo t', 'break', 'pause', 'equals', 'equal'],
+  '+': ['ar', 'a r', 'r', 'are', 'ay are', 'ay ar', 'alpha romeo', 'alfa romeo', 'alpha rome', 'alfa rome', 'alpha r', 'alfa r', 'over', 'end of message', 'plus'],
+  '>': ['sk', 's k', 'sierra kilo', 'sierra k', 'sierra kil', 'a ok', 'aok', 'okay', "that's ok", 'thats ok', "that's k", 'thats k',
+        'a okay', "that's okay", 'thats okay', 'clear', 'out', 'silent key', 'end of contact'],
+};
+
 // NATO phonetic alphabet - used for strict mode validation
 export const NATO_ALPHABET: Record<string, string> = {
   'alpha': 'A', 'bravo': 'B', 'charlie': 'C', 'delta': 'D',
@@ -180,10 +189,14 @@ const SPEECH_MAP: Record<string, string> = {
   'question': '?', 'query': '?', 'question mark': '?', '?': '?',
   'slash': '/', 'stroke': '/', 'forward slash': '/', '/': '/',
 
-  // Prosigns
-  'break': '=', 'bt': '=', 'pause': '=', 'bee tee': '=', '=': '=', 'equals': '=',
-  'over': '+', 'a r': '+', '+': '+', 'plus': '+',
-  'clear': '>', 'sk': '>', 'out': '>', 'silent key': '>', 's k': '>', '>': '>',
+  // Prosigns (displayed as BT, AR, SK) - includes NATO phonetic combos and partial recognitions
+  'break': '=', 'bt': '=', 'b t': '=', 'bee tee': '=', 'bravo tango': '=', 'bravo tang': '=', 'bravo t': '=',
+  'pause': '=', '=': '=', 'equals': '=',
+  'a r': '+', 'alpha romeo': '+', 'alfa romeo': '+', 'alpha rome': '+', 'alfa rome': '+', 'alpha r': '+', 'alfa r': '+',
+  'over': '+', 'end of message': '+', '+': '+', 'plus': '+',
+  'sk': '>', 's k': '>', 'sierra kilo': '>', 'sierra kil': '>', 'sierra k': '>', 'a ok': '>', 'aok': '>',
+  "that's ok": '>', 'thats ok': '>', "that's k": '>', 'thats k': '>', 'a okay': '>', "that's okay": '>', 'thats okay': '>',
+  'clear': '>', 'out': '>', 'silent key': '>', 'end of contact': '>', '>': '>',
 };
 
 // Type definitions for Web Speech API
@@ -281,6 +294,15 @@ export function normalizeRecognizedText(text: string, expectedChar?: string): st
     const firstWord = normalized.split(' ')[0];
     if (userMap[firstWord]) {
       return userMap[firstWord];
+    }
+  }
+
+  // Context-aware prosign matching: when expecting a prosign, prioritize prosign forms
+  // This allows 'ar' to map to '+' (AR prosign) when expecting '+', even though 'ar' normally maps to 'R'
+  if (expectedChar && PROSIGN_SPOKEN_FORMS[expectedChar]) {
+    const prosignForms = PROSIGN_SPOKEN_FORMS[expectedChar];
+    if (prosignForms.includes(normalized) || prosignForms.includes(normalized.split(' ')[0])) {
+      return expectedChar;
     }
   }
 

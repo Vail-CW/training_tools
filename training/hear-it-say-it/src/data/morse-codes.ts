@@ -46,6 +46,11 @@ export const MORSE_CODES: Record<string, string> = {
   ',': '--..--',
   '?': '..--..',
   '/': '-..-.',
+
+  // Prosigns (sent without inter-character gap)
+  '=': '-...-',   // BT (break/pause)
+  '+': '.-.-.',   // AR (end of message)
+  '>': '...-.-',  // SK (end of contact)
 };
 
 // Reverse lookup: morse pattern -> character
@@ -57,7 +62,11 @@ export const MORSE_TO_CHAR: Record<string, string> = Object.fromEntries(
 export const ALL_CHARACTERS = Object.keys(MORSE_CODES);
 
 // Character display names (for special characters if needed)
-export const CHAR_DISPLAY_NAMES: Record<string, string> = {};
+export const CHAR_DISPLAY_NAMES: Record<string, string> = {
+  '=': 'BT',  // Break/pause prosign
+  '+': 'AR',  // End of message prosign
+  '>': 'SK',  // End of contact prosign
+};
 
 // Get display name for a character
 export function getCharDisplayName(char: string): string {

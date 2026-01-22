@@ -1,5 +1,5 @@
 // Service Worker for Hear It, Say It - Vail Training
-const CACHE_NAME = 'hear-it-say-it-v1';
+const CACHE_NAME = 'hear-it-say-it-v3';
 
 // Assets to cache on install
 const ASSETS_TO_CACHE = [

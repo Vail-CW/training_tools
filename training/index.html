@@ -5,6 +5,9 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
+		<!-- Favicon -->
+		<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
 		<meta property="og:url" content="https://training.vailmorse.com/">
 		<meta property="og:type" content="website">
 		<meta property="og:title" content="Vail Training Tools">
@@ -19,55 +22,82 @@
 		<link rel="stylesheet" href="css/cards.css">
 	</head>
 	<body>
-		<!-- Navbar (simplified - no settings dropdown on landing) -->
-		<nav class="navbar is-dark">
-			<div class="navbar-brand">
-				<a class="navbar-item" href="index.html">
-					<div class="block">Vail Training</div>
-				</a>
-				<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" id="navbar-burger">
-					<span aria-hidden="true"></span>
-					<span aria-hidden="true"></span>
-					<span aria-hidden="true"></span>
-				</a>
-			</div>
-			<div class="navbar-menu navbar-menu-centered" id="navbar-menu">
-				<div class="navbar-start"></div>
-				<div class="navbar-center">
-					<a class="navbar-item" href="http://vailmorse.com">
-						<span class="icon"><i class="mdi mdi-radio-tower"></i></span>
-						<span>Repeater</span>
+		<!-- Hero Section with integrated navbar -->
+		<section class="hero-section">
+			<!-- Navbar -->
+			<nav class="navbar is-dark">
+				<div class="navbar-brand">
+					<a class="navbar-item" href="index.html">
+						Vail Training
 					</a>
-					<a class="navbar-item is-active" href="index.html">
-						<span class="icon"><i class="mdi mdi-school"></i></span>
-						<span>Training</span>
-						<span class="tag is-info is-light ml-2" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">BETA</span>
-					</a>
-					<a class="navbar-item" href="https://discord.gg/GBzj8cBat7" target="_blank" title="Text/voice chat on Discord">
-						<i class="mdi mdi-discord"></i>
+					<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" id="navbar-burger">
+						<span aria-hidden="true"></span>
+						<span aria-hidden="true"></span>
+						<span aria-hidden="true"></span>
 					</a>
 				</div>
-				<div class="navbar-end"></div>
-			</div>
-		</nav>
+				<div class="navbar-menu navbar-menu-centered" id="navbar-menu">
+					<div class="navbar-start"></div>
+					<div class="navbar-center">
+						<a class="navbar-item" href="http://vailmorse.com">
+							<span class="icon"><i class="mdi mdi-radio-tower"></i></span>
+							<span>Repeater</span>
+						</a>
+						<a class="navbar-item is-active" href="index.html">
+							<span class="icon"><i class="mdi mdi-school"></i></span>
+							<span>Training</span>
+						</a>
+						<a class="navbar-item" href="https://discord.gg/GBzj8cBat7" target="_blank" title="Join our Discord">
+							<span class="icon"><i class="mdi mdi-discord"></i></span>
+							<span>Discord</span>
+						</a>
+					</div>
+					<div class="navbar-end"></div>
+				</div>
+			</nav>
 
-		<!-- Hero Section -->
-		<section class="hero is-dark hero-section">
-			<div class="hero-body">
-				<div class="container has-text-centered">
-					<h1 class="title is-2">Vail Training Tools</h1>
-					<p class="subtitle is-5">Practice and improve your Morse code skills</p>
-				</div>
+			<!-- Hero Content -->
+			<div class="container has-text-centered hero-content">
+				<h1 class="hero-title">Vail Training Tools</h1>
+				<p class="hero-subtitle">Practice and improve your Morse code skills</p>
 			</div>
 		</section>
 
 		<!-- Card Grid -->
 		<section class="section cards-section">
 			<div class="container">
+				<!-- Featured Tool: Vail CW School -->
+				<div class="featured-tool">
+					<a href="https://learncw.vailmorse.com" class="featured-card" target="_blank" rel="noopener">
+						<div class="featured-icon">
+							<i class="mdi mdi-school"></i>
+						</div>
+						<div class="featured-content">
+							<div class="featured-badge">
+								<i class="mdi mdi-star"></i>
+								Start Here
+							</div>
+							<h2 class="featured-title">Vail CW School</h2>
+							<p class="featured-description">
+								The ultimate way to learn CW through a proven method. Track your progress with detailed statistics, practice time tracking, games, and more. Go from zero to master.
+							</p>
+						</div>
+						<div class="featured-arrow">
+							<i class="mdi mdi-arrow-right"></i>
+						</div>
+					</a>
+				</div>
+
 				<!-- CW Adapter Promo Banner -->
 				<div class="promo-banner">
 					<span class="icon"><i class="mdi mdi-usb"></i></span>
 					<span>Want to use your real CW keys with your computer? Build or buy an adapter at <a href="https://www.vailadapter.com" target="_blank">vailadapter.com</a></span>
+				</div>
+
+				<!-- Section Header -->
+				<div class="section-header">
+					<h2 class="section-title">Training Tools</h2>
+					<p class="section-subtitle">Build and refine your CW skills</p>
 				</div>
 
 				<div class="tool-grid">
@@ -119,6 +149,18 @@
 						<p class="card-description">
 							Send morse freely with real-time decoding and
 							MP3 recording for practice review.
+						</p>
+					</a>
+
+					<!-- Morse Mailbox Card -->
+					<a href="https://morsemailbox.com/" target="_blank" rel="noopener" class="tool-card tool-card-compact">
+						<div class="card-icon">
+							<i class="mdi mdi-email-outline"></i>
+						</div>
+						<h2 class="card-title">Morse Mailbox</h2>
+						<p class="card-description">
+							Send and receive asynchronous Morse code messages with friends.
+							Practice at your own pace.
 						</p>
 					</a>
 
@@ -244,16 +286,6 @@
 							<span class="friend-desc">iOS app for Morse training</span>
 							<i class="mdi mdi-open-in-new"></i>
 						</a>
-						<a href="https://morsemailbox.com/" target="_blank" rel="noopener" class="friend-link">
-							<span class="friend-name">Morse Mailbox</span>
-							<span class="friend-desc">Send & receive async Morse messages</span>
-							<i class="mdi mdi-open-in-new"></i>
-						</a>
-						<a href="https://shadowenigma.com/" target="_blank" rel="noopener" class="friend-link">
-							<span class="friend-name">Shadow Enigma</span>
-							<span class="friend-desc">Crack Enigma ciphers, earn points, climb ranks</span>
-							<i class="mdi mdi-open-in-new"></i>
-						</a>
 						<a href="https://didah.app/" target="_blank" rel="noopener" class="friend-link">
 							<span class="friend-name">didah</span>
 							<span class="friend-desc">Learn Morse code online</span>
@@ -262,6 +294,16 @@
 						<a href="https://www.keyersjourney.com/" target="_blank" rel="noopener" class="friend-link">
 							<span class="friend-name">Keyer's Journey</span>
 							<span class="friend-desc">Master Morse Code with Koch method training and realistic QSO simulation</span>
+							<i class="mdi mdi-open-in-new"></i>
+						</a>
+						<a href="https://knowcodeextra.com/" target="_blank" rel="noopener" class="friend-link">
+							<span class="friend-name">Know-Code-Extra</span>
+							<span class="friend-desc">Try the FCC's 20WPM copy test</span>
+							<i class="mdi mdi-open-in-new"></i>
+						</a>
+						<a href="https://morsecode.world/international/trainer/keyer.html" target="_blank" rel="noopener" class="friend-link">
+							<span class="friend-name">morsecode.world</span>
+							<span class="friend-desc">Practice paddle/keyer sending with timing analysis (VBand & Vail support)</span>
 							<i class="mdi mdi-open-in-new"></i>
 						</a>
 					</div>

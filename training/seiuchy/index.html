@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>Vail Seiuchy: free CW QSO trainer and simulator</title>
+<meta name="description" content="Vail Seiuchy is a free web app for amateur radio operators who want to improve their CW head-copy skills and receiving speed through simulated QSOs. A revival of Seiuchy by HB9FXW.">
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Vail Seiuchy: free CW QSO trainer and simulator" />
+<meta property="og:description" content="Improve your Morse head-copy through simulated QSOs. A revival of HB9FXW's Seiuchy, re-skinned in the Vail style. No ads, no cookies, no tracking." />
+
+<link rel="icon" type="image/png" href="img/favicon.png" />
+<link rel="apple-touch-icon" type="image/png" href="img/apple-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+
+<link href="css/vail-seiuchy.css" rel="stylesheet" type="text/css">
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/AudioContextMonkeyPatch.js"></script>
+</head>
+<body>
+    <div id="page">
+
+        <header id="masthead">
+            <div class="brand">
+                <h1 class="brand-name">Vail&nbsp;Seiuchy</h1>
+            </div>
+            <p class="tagline">Free CW QSO trainer and simulator. Head-copy practice.</p>
+        </header>
+
+        <div id="intro">
+            <p>Improve your Morse copying speed. You don't need to write everything down. You just have to pick out the info that matters, like the RST, the other operator's name, or their QTH.</p>
+            <p>There's also a customizable <a href="#fullqsosim">Full QSO simulator</a> below.</p>
+            <p>Full <a href="#instructions">instructions</a> are below. You can also <a href="#app">add Vail&nbsp;Seiuchy to your phone or tablet</a> and use it offline.</p>
+        </div>
+
+    <fieldset id="settings"><legend id="legendsettings">Settings:</legend>
+        <div id="divsettings">
+        <p class="pset">
+    Frequency: <input type="number" id="freq" value="600" step="10" size="4" min="200" max="1200" required>Hz
+    &nbsp;
+    Speed: <input type="number" id="speed" value="20" size="2" min="5" max="50" required>wpm
+    &nbsp;
+    Volume: <input type="number" min="10" max="100" value="100" step="10" id="volume">%
+        </p>
+<p class="pset">Automatic speed adjustments <input type="checkbox" class="opcb" name="autospeed" id="autospeed"> </p>
+<p class="pset">Your name: <input type="text" id="name" value="OM" size="10" required>
+<button id="test">Test</button>
+<button id="mute">Stop</button>
+</p>
+<p class='pset'>
+<input type="checkbox" class="opcb" name="realqth" id="realqth">Real place names only
+&nbsp; | &nbsp;
+Simulated key: <select id='key'>
+    <option value='computer'>Computer</option>
+    <option value='paddle'>Paddle expert</option>
+    <option value='paddlemed'>Paddle</option>
+    <option value='paddlebad'>Paddle novice</option>
+    <option value='straight'>Straight key expert</option>
+    <option value='straightmed'>Straight key</option>
+    <option value='straightbad'>Straight key novice</option>
+    <option value='straightvbad'>Straight key horror *</option>
+    <option value='bug'>Bug expert</option>
+    <option value='bugmed'>Bug</option>
+    <option value='bugbad'>Bug novice</option>
+    <option value='bugvbad'>Bug nightmare *</option>
+    <option value='snowflake'>Precious snowflake</option>
+    <option value='cootie'>Cootie - Test</option>
+    <option value='elmer'>Elmer - Test *</option>
+    <option value='farnsworth1'>Farnsworth 1 *</option>
+    <option value='farnsworth2'>Farnsworth 2, straight key *</option>
+    <option value='random'>Random key *</option>
+</select>
+</p>
+        <fieldset id="categories"><legend>Categories:</legend>
+<input type="checkbox" class="cb" autocorrect='off' name="cname" id="cname" checked="checked">&nbsp;Name
+<input type="checkbox" class="cb" name="crig" id="crig" checked="checked">&nbsp;Rig
+<input type="checkbox" class="cb" name="ccall" id="ccall" checked="checked">&nbsp;Call
+<input type="checkbox" class="cb" name="cage" id="cage" checked="checked">&nbsp;Age
+<input type="checkbox" class="cb" name="crst" id="crst" checked="checked">&nbsp;RST
+<input type="checkbox" class="cb" name="cqth" id="cqth" checked="checked">&nbsp;QTH<br />
+<input type="checkbox" class="cb" name="cjob" id="cjob">&nbsp;Job
+<input type="checkbox" class="cb" name="cclub" id="cclub">&nbsp;Club Nr
+<input type="checkbox" class="cb" name="ctest" id="ctest" onclick="
+   $('#contest-options').toggle()">&nbsp;Contest
+<div id='contest-options'>
+    <select id='stest' >
+        <option value='serial'>Serial number</option>
+        <option value='grid'>Grid (4 chars)</option>
+        <option value='vhf'>VHF (serial + grid (6 chars))</option>
+        <option value='fd'>Field day</option>
+        <option value='loc'>Full locator (6 chars)</option>
+    </select>
+    <br />
+    <label for="mygrid" id="mygridlabel">Your grid</label>
+    <input type="text" id="mygrid" size="6">
+    <input type="checkbox" name="clocal" id="clocal">&nbsp;Local only
+</div>
+<p class='jslink'><a onclick='unsetCat()' href='javascript:void(0);'>Uncheck all</a> /
+<a onclick='setCat()' href='javascript:void(0);'>Check all</a> / <a onclick='resetScore()' href='javascript:void(0);'>Reset score</a></p>
+        </fieldset>
+        </div>
+    </fieldset>
+    <div id='wrapper'>
+        <div id="danswer">
+        This is what I'd log <input type="text" id="itext" value="" autocorrect='off' autocomplete='off' placeholder="Your answer">
+        <button id="play">Start</button>
+        <button id="again">Again</button>
+        </div>
+        <div class="score-box">
+            Score: <span id="score"></span>
+        </div>
+    </div>
+<noscript>Sorry, this CW simulator requires JavaScript and it seems you either don't have it or have turned it off.</noscript>
+<table id="logcontainer">
+    <thead>
+        <tr id='headrow'><th>Past QSOs</th><th>Log</th></tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<hr />
+<h2 id="fullqsosim">Full QSO Simulator</h2>
+        <p><button id="fullqso">Full QSO</button>
+            <input type="checkbox" checked="checked" id="printqso"> Show the text
+            <button id="repeat">Repeat</button>
+            <button id="stop">Stop</button>
+        </p>
+        <div id='fullqsodiv'><p></div>
+
+    <h2 id="about">About Vail Seiuchy</h2>
+    <div class="homage">
+        <p><strong>Vail Seiuchy</strong> is a revival of <strong>Seiuchy</strong>, a free CW (Morse code) QSO trainer originally written in 2016 by <strong>François Wisard, HB9FXW</strong>. Seiuchy lived at <em>seiuchy.macache.com</em>. It was a great tool for hams learning to head-copy Morse, meaning you understand a QSO as it happens instead of writing every character down first.</p>
+        <p>That site has since gone offline. We didn't want the tool to disappear with it, so we kept it running. This is the original Seiuchy code, left as close to the original as we could. We re-skinned it in the <a href="https://learncw.vailmorse.com/">Vail</a> style and re-hosted it so people can keep using it. All the credit for the tool itself, the QSO engine, the keying models, the geography, and the humor, goes to HB9FXW. We just changed the paint.</p>
+        <p>If you are HB9FXW, or you know him, and you'd rather this be taken down, renamed, or handled some other way, get in touch and we'll sort it out. This is here out of respect for the original work. Long live CW.</p>
+    </div>
+
+    <h2>Notes</h2>
+    <p>Vail Seiuchy is free, doesn't use cookies, and doesn't track you. Once the page has loaded you can keep using it without an internet connection. No ads.</p>
+    <p>Provided as-is, with no warranty implied.</p>
+    <p>Good luck and have fun, here or on the air. Long live CW!</p>
+
+    <h2 id="instructions">Instructions</h2>
+        <p>Learn to ignore the padding and focus on what matters: what you should log. Head-copy isn't that hard, it's easy. Repetition of filler words will train you to recognize them on the air and ignore them too, allowing you to understand QSOs on the spot instead of having to write them down before being able to understand them.</p>
+    <p>Choose your favourite sidetone pitch (in Hertz, from 200 to 1200), speed in wpm (from 5 to 50), input your name or keep the default "OM", and uncheck some categories if you're not yet proficient in Morse. Press "Start" to begin, or the "enter" key if your cursor is in the answer field.</p>
+    <p>Only enter the most relevant info. Don't write "43 years old", only "43". Only enter the information once, even when it's given twice. The most complex answers are in the "rig" category: there you have to enter it as it is sent ("tentec century 21", for example).</p>
+    <p>For the "contest" category, don't enter cut numbers; enter them as you would log them in a real contest log: a serial number received as "T4N" should be logged as "049".</p>
+        <p>Press "enter" to validate your answer. You will hear a "C" if your answer is correct, and a "?" if it isn't. Your answer will be logged in red if it was wrong, in green if it was good. The whole exchange will also be logged, in the "Past QSOs" column.</p>
+        <p>You can ask for a repeat (or many repeats), but then your score won't increase if you answer correctly.</p>
+        <p>For some contests you can enter your grid square and the program will give you QSOs at realistic(-ish) distances. Check "local only" if you want to train the grids around you and avoid DX. The VHF contest has a shorter range than the other ones.</p>
+        <p>This software should work with recent browsers which support the <a href="https://en.wikipedia.org/wiki/HTML5_Audio#Web_Audio_API_and_MediaStream_Processing_API">Web Audio API</a>.</p>
+        <p>The "Full QSO" button above simulates a whole non-interactive QSO between two hams. It can get a bit silly, so don't fret if you hear HB4XXX Li-Chang the former clown in Stockholm, Brazil where it snows... Just follow along, there's nothing to type (and so the input field is disabled).</p>
+        <p>You can choose the key and keying expertise level of the simulation. There are paddles, straight keys, bugs... The settings with an asterisk won't be used if you select "random". "Computer" is perfect sending, without any personality. Paddles give perfect element and inter-element ratios but the spaces between letters and words may vary. Straight keys may sound pretty random but I've heard and worked OMs even worse than "Straight key horror". "Precious snowflake" is computer sending, but with bad ratios set in the hope of standing out with an unusual swing. "Elmer" provides slightly longer spaces between characters, and much longer spaces between words, but otherwise uses perfect sending; it's aimed at beginners still hoping for a bit of help from Mr Farnsworth. Bugs and paddles can sometimes give you too many dots, especially in inexperienced (or drunk or sick) hands. Fortunately for you, Seiuchy won't transform U into V or B into 6; the bad news is that it will occasionally add a dot to a number or punctuation sign or prosign. With bad keying, words per minute will sometimes deviate from their rigid meaning. 20wpm with an untamed bug will feel more like 35 at times.</p>
+        <p>If you check "automatic speed adjustments", Vail Seiuchy will adapt its speed to your answers: if you answer correctly, it will increase by 1 word per minute. If you give a wrong answer, it will decrease by 1 wpm. If you asked for a repeat, it won't increase the speed even though you got it right, but it will decrease it in case it wasn't sufficient for you to give the correct answer.</p>
+        <p><b>Back to <a href="#settings">the trainer</a></b></p>
+
+        <h2 id="app">Phone / Tablet App</h2>
+        <p>If you want to train your Morse skills on the go without an internet connection, install Vail Seiuchy as a web app.</p>
+        <p>All the necessary data is loaded once to your device, and every time you launch Vail Seiuchy while online the page is updated to the latest version.</p>
+        <p>The exact procedure depends on your operating system and browser, but it's usually a menu option that says something like "Add to Home Screen". On iOS with Safari, it's in the sharing menu (the "square with an arrow" icon). On Android with Chrome, it's in the "three vertical dots" menu at the top of the screen.</p>
+        <p><b>Back to <a href="#settings">the trainer</a></b></p>
+
+    <h2>Other CW training resources</h2>
+    <ul>
+        <li><a href="https://learncw.vailmorse.com/">Vail CW School</a>: structured lessons and daily practice in the Vail family of tools.</li>
+        <li><a href="https://lcwo.net">LCWO, Learn CW Online</a>: an excellent resource for beginners and advanced operators alike.</li>
+        <li><a href="https://www.dxatlas.com/MorseRunner/">Morse Runner</a>: simulates a CW contest with realistic QSB, QRN, QRM and lids.</li>
+        <li><a href="https://justlearnmorsecode.com">Just Learn Morse Code</a>: another great, friendly trainer.</li>
+        <li><a href="http://websdr.org">Online radio receivers</a>: great for hearing real CW from all around the world.</li>
+    </ul>
+
+    <div id="footer">
+        <hr>
+        <p class="foot">Vail Seiuchy, a revival re-skinned in the Vail style.</p>
+        <p class="foot">Original tool: <strong>Seiuchy</strong>, &copy; 2016-2020 François Wisard, HB9FXW. Morse audio engine based on code by Eric Holk. AudioContext-MonkeyPatch by Chris Wilson.</p>
+    </div>
+</div>
+<script type="text/javascript" src="js/seiuchy.js"></script>
+</body>
+</html>

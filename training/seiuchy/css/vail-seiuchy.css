@@ -1,0 +1,322 @@
+/* ==========================================================================
+   Vail Seiuchy: Vail-styled skin for HB9FXW's Seiuchy CW trainer.
+   Only the presentation has changed; the markup IDs and behaviour are the
+   original tool's. Palette + dark aesthetic inspired by learncw.vailmorse.com.
+   ========================================================================== */
+
+:root {
+    --bg:          #0a0a0a;  /* page backdrop          */
+    --panel:       #1a1a1a;  /* main card              */
+    --panel-2:     #2a2a2a;  /* nested panels / inputs */
+    --panel-3:     #3a3a3a;  /* hover / stripes        */
+    --border:      #3a3a3a;
+    --border-soft: #2a2a2a;
+    --text:        #e8e8e8;
+    --text-dim:    #999999;
+    --teal:        #00d1b2;  /* Vail primary           */
+    --green:       #008866;
+    --green-dk:    #006644;
+    --blue:        #00aaff;
+    --orange:      #ffa500;
+    --red:         #ff3860;
+    --radius:      0.75rem;
+    --radius-sm:   0.4rem;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    padding: 1.5rem 1rem 3rem;
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(circle at 20% -10%, rgba(0, 209, 178, 0.10), transparent 45%),
+        radial-gradient(circle at 90% 0%, rgba(0, 170, 255, 0.08), transparent 40%);
+    background-repeat: no-repeat;
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+}
+
+a:link, a:visited { color: var(--teal); text-decoration: none; }
+a:hover { color: var(--blue); text-decoration: underline; }
+
+/* --- main card ----------------------------------------------------------- */
+#page {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    background-color: var(--panel);
+    padding: 1.75rem 1.75rem 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* --- masthead / brand ---------------------------------------------------- */
+#masthead {
+    text-align: center;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+.brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.brand-name {
+    margin: 0;
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--teal);
+}
+.tagline {
+    margin: 0.5rem auto 0;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    width: auto;
+}
+
+/* --- headings + body text ------------------------------------------------ */
+h2 {
+    margin-top: 2.25rem;
+    margin-bottom: 0.6rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--teal);
+}
+#about { color: var(--blue); }
+
+p {
+    text-align: left;
+    width: 100%;
+    margin: 0.6rem auto;
+}
+
+ul { width: 100%; padding-left: 1.25rem; }
+li { margin-top: 0.6rem; }
+
+hr {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--border-soft);
+    margin: 2rem 0;
+}
+
+/* --- form controls ------------------------------------------------------- */
+input, select, button {
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+input[type="text"], input[type="number"], select {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.25);
+}
+input[type="checkbox"] {
+    width: 1.05em;
+    height: 1.05em;
+    vertical-align: -0.15em;
+    accent-color: var(--teal);
+    cursor: pointer;
+}
+
+button {
+    padding: 0.45rem 1.1rem;
+    margin: 0 0.15rem;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    background: var(--teal);
+    color: #05231f;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s, box-shadow 0.2s;
+}
+button:hover { background: #1ce0c4; box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.2); }
+button:active { transform: translateY(1px); }
+
+/* secondary-style buttons */
+#mute, #stop, #again, #repeat, #test {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+#mute:hover, #stop:hover, #again:hover, #repeat:hover, #test:hover {
+    background: var(--panel-3);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+/* --- fieldsets / settings ------------------------------------------------ */
+fieldset {
+    margin: 1.5rem 0;
+    padding: 0.75rem 1rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.015);
+}
+legend {
+    padding: 0 0.5rem;
+    font-weight: 700;
+    color: var(--teal);
+}
+#legendsettings { cursor: pointer; }
+#legendsettings:hover { color: var(--blue); }
+
+#settings { width: 100%; }
+#categories { width: 100%; margin: 0.75rem 0 0; }
+
+.pset { margin: 0.5rem 0; }
+
+#freq  { width: 4.5em; }
+#speed { width: 3.5em; }
+#volume { width: 3.5em; }
+#mygrid { width: 6em; }
+
+.cb { margin-left: 0.9rem; margin-right: 0.15rem; }
+
+#contest-options { display: none; margin-top: 0.6rem; }
+#contest-options select { margin-bottom: 0.4rem; }
+#mygridlabel { margin-right: 0.3rem; }
+
+.jslink { font-size: 0.85rem; margin-top: 0.75rem; }
+
+/* --- answer + score row -------------------------------------------------- */
+#wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1.75rem 0;
+    padding: 1rem 1.25rem;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+#danswer {
+    font-size: 1.05rem;
+    margin: 0;
+    padding: 0;
+    flex: 1 1 320px;
+}
+#itext {
+    min-width: 9em;
+    margin: 0 0.3rem;
+}
+
+.score-box {
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-align: center;
+    background: var(--green-dk);
+    color: var(--text);
+    border: 1px solid var(--green);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    min-width: 6em;
+}
+
+/* --- log table ----------------------------------------------------------- */
+#logcontainer {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-spacing: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-size: 0.98rem;
+    margin: 1.5rem 0 2rem;
+    background-color: var(--panel-2);
+    min-height: 14em;
+}
+th, td {
+    width: 50%;
+    vertical-align: bottom;
+    text-align: center;
+    padding: 0.4rem 0.5rem;
+}
+th {
+    background-color: var(--green-dk);
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.03); }
+
+.wrong-log-el          { color: var(--red); }
+.correct-log-el        { color: var(--teal); }
+.repeat-correct-log-el { color: var(--orange); }
+
+.newtag {
+    font-size: 0.65rem;
+    color: var(--bg);
+    background-color: var(--orange);
+    border-radius: 3px;
+    padding: 0 3px;
+}
+
+/* --- full QSO output ----------------------------------------------------- */
+#fullqsodiv {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+    background-color: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%;
+    margin: 1rem 0;
+    padding: 0.25rem 1rem;
+    color: var(--text);
+}
+
+/* --- homage / about ------------------------------------------------------ */
+.homage {
+    background: linear-gradient(180deg, rgba(0, 209, 178, 0.06), rgba(0, 170, 255, 0.04));
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+}
+.homage p { margin: 0.6rem 0; }
+
+/* --- canvas (visual morse, if used) -------------------------------------- */
+canvas {
+    border: 1px solid var(--border);
+    display: block;
+    margin: 1rem auto;
+    border-radius: var(--radius-sm);
+}
+
+/* --- footer -------------------------------------------------------------- */
+#footer { margin-top: 3rem; }
+.foot {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+}
+
+/* --- responsive ---------------------------------------------------------- */
+@media (max-width: 600px) {
+    body { padding: 0.75rem 0.5rem 2rem; }
+    #page { padding: 1.25rem 1rem 1.5rem; }
+    .brand-name { font-size: 1.9rem; }
+    #wrapper { flex-direction: column; align-items: stretch; }
+    .score-box { width: 100%; }
+}

@@ -106,7 +106,7 @@ Simulated key: <select id='key'>
         <div id="danswer">
         This is what I'd log <input type="text" id="itext" value="" autocorrect='off' autocomplete='off' placeholder="Your answer">
         <button id="play">Start</button>
-        <button id="again">Again</button>
+        <button id="again" title="Replay the current QSO. Heads up: if you use a repeat, a correct answer is logged but won't add to your score.">Again</button>
         </div>
         <div class="score-box">
             Score: <span id="score"></span>
@@ -120,6 +120,11 @@ Simulated key: <select id='key'>
     <tbody>
     </tbody>
 </table>
+<p class="loglegend">
+    <span class="key key-correct">&#9679;</span> correct
+    <span class="key key-repeat">&#9679;</span> correct, but you used "Again" so it doesn't score
+    <span class="key key-wrong">&#9679;</span> wrong
+</p>
 <hr />
 <h2 id="fullqsosim">Full QSO Simulator</h2>
         <p><button id="fullqso">Full QSO</button>

@@ -266,6 +266,22 @@ tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.03); }
 .correct-log-el        { color: var(--teal); }
 .repeat-correct-log-el { color: var(--orange); }
 
+/* Colour key for the log, so the orange "correct but repeated" state isn't
+   mistaken for an error. Mirrors the three log classes above. */
+.loglegend {
+    margin: -1rem 0 0;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+    align-items: center;
+}
+.loglegend .key { font-size: 0.9em; }
+.key-correct { color: var(--teal); }
+.key-repeat  { color: var(--orange); }
+.key-wrong   { color: var(--red); }
+
 .newtag {
     font-size: 0.65rem;
     color: var(--bg);

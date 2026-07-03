@@ -156,6 +156,10 @@ const SPEECH_MAP: Record<string, string> = {
   'number zero': '0', 'number one': '1', 'number two': '2', 'number three': '3',
   'number four': '4', 'number five': '5', 'number six': '6', 'number seven': '7',
   'number eight': '8', 'number nine': '9',
+  // Speech recognition sometimes returns digits instead of words
+  'number 0': '0', 'number 1': '1', 'number 2': '2', 'number 3': '3',
+  'number 4': '4', 'number 5': '5', 'number 6': '6', 'number 7': '7',
+  'number 8': '8', 'number 9': '9',
 
   // Spanish numbers
   'cero': '0', 'uno': '1', 'dos': '2', 'tres': '3', 'cuatro': '4',

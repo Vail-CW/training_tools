@@ -3,7 +3,12 @@
 /qso-simulator/* /qso-simulator/dist/:splat 200!
 /qso-simulator /qso-simulator/dist/index.html 200!
 
-# Redirect Hear It Say It paths to the built app in dist folder
-/hear-it-say-it/index.html /hear-it-say-it/dist/index.html 200!
-/hear-it-say-it/* /hear-it-say-it/dist/:splat 200!
-/hear-it-say-it /hear-it-say-it/dist/index.html 200!
+# Hear It Say It — disabled (code retained, not reachable). Re-enable by uncommenting
+# the three rules below and deleting the two block rules.
+# /hear-it-say-it/index.html /hear-it-say-it/dist/index.html 200!
+# /hear-it-say-it/* /hear-it-say-it/dist/:splat 200!
+# /hear-it-say-it /hear-it-say-it/dist/index.html 200!
+
+# Block all access (including direct dist URLs) while disabled — bounce to home
+/hear-it-say-it /  302!
+/hear-it-say-it/* /  302!
